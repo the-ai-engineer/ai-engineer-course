@@ -18,7 +18,7 @@ Today is {datetime.now().isoformat()}
 """
 
 response = client.responses.parse(
-    model="gpt-5",
+    model="gpt-4o",
     input=[
         {"role": "system", "content": PROMPT},
         {
@@ -29,7 +29,7 @@ response = client.responses.parse(
     text_format=CalendarEvent,
 )
 
-event = response.output_parsed
-event.name  # 'Meeting with Jack'
-event.date.isoformat()  # '2025-08-22T14:00:00+00:00'
-event.participants  # ['Jack']
+# event = response.output_parsed
+# event.name  # 'Meeting with Jack'
+# event.date.isoformat()  # '2025-08-22T14:00:00+00:00'
+# event.participants  # ['Jack']

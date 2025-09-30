@@ -5,7 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "ipykernel>=6.30.1",
-    "openai>=1.99.9",
-    "requests>=2.32.4",
+    "chromadb>=1.1.0",
+    "docling>=2.0.0",
+    "ipykernel",
+    "openai",
+    "requests",
+    "tiktoken",
 ]
+
+[tool.pyright]
+typeCheckingMode = "basic"  # or "off" or "strict"

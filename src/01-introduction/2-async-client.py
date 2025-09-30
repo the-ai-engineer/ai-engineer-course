@@ -1,10 +1,12 @@
 import asyncio
-import nest_asyncio
+
+# Uncomment if running in a notebook
+# import nest_asyncio
 
 from openai import AsyncOpenAI
 
-# Allow nested event loops
-nest_asyncio.apply()
+# Allow nested event loops inside notebooks
+# nest_asyncio.apply()
 
 client = AsyncOpenAI()
 

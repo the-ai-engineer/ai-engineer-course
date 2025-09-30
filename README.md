@@ -2,5 +2,9 @@
 
 Welcome to the AI Engineer course. 
 
-Here you'll find source code and projects to help you master AI Engineering. 
+Here you'll find source code and projects to help you master the basics of AI Engineering. 
+
+- Foundations (OpenAI API, Structured Output, Function Calling)
+- RAG
+- MCP
 
