@@ -4,7 +4,7 @@ client = OpenAI()
 
 # Example 1: Basic client call
 response = client.responses.create(
-    model="gpt-5", input="Who won the world series in 2020?"
+    model="gpt-5", input="What is the capital of the UK?"
 )
 
 response.model_dump()

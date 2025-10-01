@@ -2,10 +2,15 @@
 """
 AI Agents 101: Building Intelligent Agents with Tool Calling
 
-This example demonstrates:
-1. Basic agent structure with conversation memory
-2. Tool calling loop (agent decides when to use tools)
-3. Type-safe tool definitions using Pydantic
+The truth: An AI agent is just an LLM in a loop that can call functions.
+
+The Loop
+- Ask the LLM a question ("what is weather in Tokyo?")
+- If it wants to use a tool, run that tool ("Call the weather tool with these args")
+- Give the result back to the LLM
+- Repeat until it has a final answer
+
+This example shows you the entire pattern in ~100 lines.
 """
 
 import json
@@ -73,6 +78,7 @@ TOOLS = {
 class Agent:
     def __init__(self, system_prompt: str = "You are a helpful AI agent."):
         self.client = OpenAI()
+        # This is the memory of the conversation and previous tool calls
         self.messages = [{"role": "system", "content": system_prompt}]
         self.max_iterations = 10
 
@@ -123,13 +129,13 @@ class Agent:
 if __name__ == "__main__":
     agent = Agent()
 
-    print("Example 1: No tools needed")
-    print(agent.run("What is the capital of France?"))
-    print()
+    # print("Example 1: No tools needed")
+    # print(agent.run("What is the capital of France?"))
+    # print()
 
-    print("Example 2: Using weather tool")
-    print(agent.run("What's the weather in Tokyo?"))
-    print()
+    # print("Example 2: Using weather tool")
+    # print(agent.run("What's the weather in Tokyo?"))
+    # print()
 
-    print("Example 3: Multiple locations")
-    print(agent.run("What's the weather in Seattle and Paris?"))
+    # print("Example 3: Multiple locations")
+    # print(agent.run("What's the weather in Seattle and Paris?"))
