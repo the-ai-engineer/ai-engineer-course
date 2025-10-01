@@ -14,7 +14,7 @@ response.output_text
 # Example 2: System prompt
 response2 = client.responses.create(
     model="gpt-5",
-    instructions="Speak like a pirate and respponse in Japenese",
+    instructions="Speak like a pirate and respond in Japenese",
     input="Who won the world series in 2020?",
 )
 
