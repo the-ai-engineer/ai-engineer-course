@@ -26,12 +26,8 @@ def create_embeddings(texts, model="text-embedding-3-small", dimensions=None):
 
     embeddings = [data.embedding for data in response.data]
     total_tokens = response.usage.total_tokens
-    cost_per_1k = 0.00002 if "small" in model else 0.00013
-    total_cost = (total_tokens / 1000) * cost_per_1k
 
-    print(
-        f"{model}: {len(embeddings[0])} dims, {total_tokens} tokens, ${total_cost:.6f}"
-    )
+    print(f"{model}: {len(embeddings[0])} dimensions, {total_tokens} tokens")
     return embeddings
 
 
