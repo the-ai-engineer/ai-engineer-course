@@ -17,7 +17,7 @@ class SupportQuery(BaseModel):
 
 
 response = client.responses.parse(
-    model="gpt-4o",
+    model="gpt-5-mini",
     input=[
         {
             "role": "user",
@@ -30,3 +30,4 @@ response = client.responses.parse(
 # query = response.output_parsed
 # query.query_type  # QueryType.BILLING
 # query.summary  # 'Customer charged twice for subscription, requesting refund'
+

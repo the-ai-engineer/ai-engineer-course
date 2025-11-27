@@ -67,7 +67,7 @@ def get_weather(location, unit="celsius"):
 messages: list = [{"role": "user", "content": "What's the weather like in Tokyo?"}]
 
 response = client.responses.create(
-    model="gpt-4o",
+    model="gpt-5-mini",
     tools=tools,  # type: ignore[arg-type]
     input=messages,
 )
@@ -102,7 +102,7 @@ for item in response.output:
 
         # Send result back to get final answer
         final_response = client.responses.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             tools=tools,  # type: ignore[arg-type]
             input=messages,  # type: ignore[arg-type]
         )
@@ -112,3 +112,4 @@ for item in response.output:
     elif item.type == "message":
         # LLM answered directly without using tools
         print(f"Direct answer: {item.content}")
+

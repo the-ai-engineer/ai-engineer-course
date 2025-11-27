@@ -3,7 +3,7 @@ from openai import OpenAI
 client = OpenAI()
 
 stream = client.responses.create(
-    model="gpt-5",
+    model="gpt-5-mini",
     input=[
         {
             "role": "user",
@@ -15,3 +15,4 @@ stream = client.responses.create(
 
 for event in stream:
     print(event)
+

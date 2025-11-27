@@ -116,7 +116,7 @@ def run_agent(
     for iteration in range(max_iterations):
         # Call the LLM
         response = client.responses.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             instructions=system_prompt,
             tools=tools,  # type: ignore[arg-type]
             input=messages,  # type: ignore[arg-type]
@@ -183,3 +183,4 @@ if __name__ == "__main__":
         print("-" * 60)
         answer = run_agent(question)
         print(f"\nAgent: {answer}")
+
