@@ -1,7 +1,7 @@
 [project]
 name = "ai-engineer-course"
 version = "0.1.0"
-description = "Add your description here"
+description = "A course that covers the foundations needed for AI engineering"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
