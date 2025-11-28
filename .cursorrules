@@ -1,0 +1,66 @@
+# Cursor Rules for AI Engineer Course
+
+## Project Context
+This is an educational course teaching AI engineering from first principles.
+Code should be clear, simple, and demo-friendly.
+
+## Code Style
+
+### Python
+- Use Python 3.11+ features
+- Simple, readable code over clever code
+- Each file should demonstrate ONE key concept
+- Keep files under 150 lines when possible
+- Use type hints for function signatures
+- Use docstrings for modules and key functions
+
+### Formatting
+- Use ruff for formatting (88 char line length)
+- Double quotes for strings
+- Imports at top, stdlib first, then third-party
+
+### Comments
+- Explain WHY, not WHAT
+- Use section headers for code organization:
+  ```python
+  # =============================================================================
+  # Section Name
+  # =============================================================================
+  ```
+
+### Naming
+- snake_case for functions and variables
+- PascalCase for classes
+- UPPER_CASE for constants
+- Descriptive names over abbreviations
+
+## What NOT to do
+- No emojis in code (use [OK], [FAIL] for status)
+- No overly complex examples
+- No unnecessary abstractions
+- No f-strings without substitutions
+- No print statements without purpose
+
+## Code Examples Should Be
+- Runnable as standalone scripts
+- Self-contained (minimal dependencies)
+- Well-commented for teaching
+- Easy to modify and experiment with
+
+## File Structure
+```
+module-N/
+├── 0-introduction.md     # Module overview
+├── lessons/              # Markdown lessons for Skool
+├── N-topic.py            # Runnable code examples
+├── pyproject.toml        # uv dependencies
+└── env-sample            # Environment template
+```
+
+## When Writing Code
+1. Start with a docstring explaining the concept
+2. Use clear section headers
+3. Show the simplest working example first
+4. Add complexity only if it teaches something new
+5. End with a runnable demo if appropriate
+

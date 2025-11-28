@@ -62,7 +62,7 @@ def generate_answer(query: str, context_chunks: list[str]) -> str:
     """Generate answer using OpenAI with retrieved context."""
     # Format context for the LLM
     context = "\n\n".join(
-        [f"[Chunk {i+1}]\n{chunk}" for i, chunk in enumerate(context_chunks)]
+        [f"[Chunk {i + 1}]\n{chunk}" for i, chunk in enumerate(context_chunks)]
     )
 
     # Create prompt with context

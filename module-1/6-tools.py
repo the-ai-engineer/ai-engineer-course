@@ -112,4 +112,3 @@ for item in response.output:
     elif item.type == "message":
         # LLM answered directly without using tools
         print(f"Direct answer: {item.content}")
-

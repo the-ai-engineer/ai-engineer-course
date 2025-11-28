@@ -158,4 +158,3 @@ if __name__ == "__main__":
         print("No summary needed yet.")
 
     print(f"Recent messages: {len(summary_memory.messages)}")
-

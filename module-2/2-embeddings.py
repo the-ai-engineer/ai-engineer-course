@@ -69,3 +69,7 @@ def main():
 
     for query in queries:
         find_most_similar(query, chunks, embeddings_default)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,5 +1,5 @@
 """
-Conversations and Message Roles
+Lesson 3: Conversations and Message Roles
 
 LLM APIs are stateless - each call is independent. To have a conversation,
 you must send the full history with each request. Messages have roles that
