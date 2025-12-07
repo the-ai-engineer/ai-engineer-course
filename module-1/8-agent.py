@@ -38,17 +38,17 @@ tools = [
     },
     {
         "type": "function",
-        "name": "calculate",
-        "description": "Perform a mathematical calculation.",
+        "name": "get_time",
+        "description": "Get the current time in a city's timezone.",
         "parameters": {
             "type": "object",
             "properties": {
-                "expression": {
+                "city": {
                     "type": "string",
-                    "description": "Math expression to evaluate, e.g. '2 + 2'",
+                    "description": "City name, e.g. 'Paris', 'Tokyo'",
                 },
             },
-            "required": ["expression"],
+            "required": ["city"],
         },
     },
 ]
@@ -70,20 +70,21 @@ def get_weather(city: str) -> str:
     return weather_data.get(city.lower(), f"No weather data for {city}")
 
 
-def calculate(expression: str) -> str:
-    """Safe calculator - only allows basic math."""
-    try:
-        # Only allow safe math operations
-        result = eval(expression, {"__builtins__": {}}, {})
-        return str(result)
-    except Exception as e:
-        return f"Error: {e}"
+def get_time(city: str) -> str:
+    """Simulated timezone API."""
+    time_data = {
+        "paris": "14:30 CET",
+        "london": "13:30 GMT",
+        "tokyo": "22:30 JST",
+        "new york": "08:30 EST",
+    }
+    return time_data.get(city.lower(), f"No timezone data for {city}")
 
 
 # Tool registry - maps names to functions
 tool_registry = {
     "get_weather": get_weather,
-    "calculate": calculate,
+    "get_time": get_time,
 }
 
 
@@ -172,8 +173,8 @@ if __name__ == "__main__":
     # Test questions that exercise the agent
     questions = [
         "What's the weather in Paris?",
-        "What is 25 * 4 + 10?",
-        "What's 2 + 2? Also, what's the weather in London?",
+        "What time is it in Tokyo?",
+        "What's the weather and time in London?",  # Multiple tools
         "What's the capital of France?",  # No tools needed
     ]
 

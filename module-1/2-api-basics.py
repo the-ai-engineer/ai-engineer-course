@@ -71,3 +71,37 @@ print(f"Response ID: {response3.id}")
 
 # You can also see the full response structure:
 # print(response3.model_dump())
+
+# =============================================================================
+# Production Pattern: Retries and Error Handling
+# =============================================================================
+
+# The OpenAI SDK has built-in retry logic. Configure it when creating the client:
+
+import openai
+
+client_with_retries = OpenAI(
+    max_retries=3,  # Retry up to 3 times on transient errors
+    timeout=30.0,   # Timeout after 30 seconds
+)
+
+# For custom error handling, wrap calls in try/except:
+
+try:
+    response4 = client.responses.create(
+        model="gpt-5-mini",
+        input="Hello!",
+    )
+    print(f"\nExample 4: {response4.output_text}")
+
+except openai.AuthenticationError:
+    # Invalid API key
+    print("Error: Check your OPENAI_API_KEY")
+
+except openai.RateLimitError:
+    # Too many requests - back off and retry, or queue for later
+    print("Error: Rate limited. Wait and retry.")
+
+except openai.APIError as e:
+    # Server error - usually transient
+    print(f"Error: API error - {e}")

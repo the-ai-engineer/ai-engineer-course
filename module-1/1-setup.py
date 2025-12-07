@@ -6,6 +6,7 @@ Usage: uv run python 1-setup.py
 
 import os
 
+import openai
 from openai import OpenAI
 
 
@@ -17,12 +18,18 @@ def verify():
 
     print("[OK] API key found")
 
-    client = OpenAI()
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input="Say 'Hello' and nothing else.",
-    )
-    print(f"[OK] API working: {response.output_text}")
+    try:
+        client = OpenAI()
+        response = client.responses.create(
+            model="gpt-5-mini",
+            input="Say 'Hello' and nothing else.",
+        )
+        print(f"[OK] API working: {response.output_text}")
+
+    except openai.AuthenticationError:
+        print("[FAIL] Invalid API key")
+    except openai.APIError as e:
+        print(f"[FAIL] API error: {e}")
 
 
 if __name__ == "__main__":

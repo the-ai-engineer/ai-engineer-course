@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.aihero.dev)",
+      "WebFetch(domain:vercel.com)",
+      "WebSearch",
+      "WebFetch(domain:blog.langchain.com)",
+      "Bash(ls:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
