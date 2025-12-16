@@ -6,7 +6,15 @@
       "WebFetch(domain:vercel.com)",
       "WebSearch",
       "WebFetch(domain:blog.langchain.com)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:googleapis.github.io)",
+      "Bash(git add:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:www.skool.com)",
+      "WebFetch(domain:academy.datalumina.com)",
+      "WebFetch(domain:www.trustpilot.com)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

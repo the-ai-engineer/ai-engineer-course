@@ -1,8 +1,0 @@
-# Copy this file to .env and fill in your API key
-# NEVER commit .env to git!
-#
-# cp env-sample .env
-# Then edit .env with your actual key
-
-OPENAI_API_KEY=sk-your-key-here
-

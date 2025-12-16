@@ -1,0 +1,9 @@
+[project]
+name = "timezone-agent"
+version = "0.1.0"
+description = "Week 1 Project: Terminal-based timezone assistant"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.0.0",
+    "python-dotenv>=1.0.0",
+]

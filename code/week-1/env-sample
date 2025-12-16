@@ -1,0 +1,4 @@
+# Copy this file to .env and add your API key
+# Get your key at: https://aistudio.google.com/apikey
+
+GEMINI_API_KEY=your-api-key-here

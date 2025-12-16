@@ -1,0 +1,17 @@
+[project]
+name = "week-1-foundations"
+version = "0.1.0"
+description = "Module 1: AI Engineering Foundations"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "tenacity>=8.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.0.0",
+    "ruff>=0.1.0",
+]
