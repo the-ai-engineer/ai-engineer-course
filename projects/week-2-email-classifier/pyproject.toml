@@ -1,0 +1,17 @@
+[project]
+name = "week-2-email-classifier"
+version = "0.1.0"
+description = "Email classification and routing pipeline using Gmail API"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "google-auth-oauthlib>=1.0.0",
+    "google-api-python-client>=2.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.0.0",
+]

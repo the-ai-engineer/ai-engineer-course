@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is an AI engineering course teaching from first principles. No frameworks until Module 4 (ADK).
+This is an AI engineering course teaching from first principles. No frameworks until Module 4 (PydanticAI).
 
 ## Course Structure
 
@@ -13,7 +13,7 @@ ai-engineer-course/
 │   ├── week-1/           # Module 1: Foundations (public)
 │   ├── week-2/           # Module 2: Workflows & Agents
 │   ├── week-3/           # Module 3: RAG Fundamentals
-│   ├── week-4/           # Module 4: RAG Agent with ADK
+│   ├── week-4/           # Module 4: RAG Agent with PydanticAI
 │   ├── week-5/           # Module 5: Evals & Monitoring
 │   └── week-6/           # Module 6: Deployment
 ├── lessons/              # Lesson content (gitignored)
@@ -74,7 +74,7 @@ graph LR
 Always consult these docs when writing code examples:
 
 - **Google GenAI SDK**: https://googleapis.github.io/python-genai/
-- **Google ADK (Module 4+)**: https://google.github.io/adk-docs/
+- **PydanticAI (Module 4+)**: https://ai.pydantic.dev/
 
 ## Code Guidelines
 

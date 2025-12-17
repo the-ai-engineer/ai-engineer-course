@@ -152,38 +152,41 @@
 
 ---
 
-# Module 4: RAG Agent with ADK
+# Module 4: RAG Agent with PydanticAI
 
-**Goal:** Introduce Google ADK. Build a production RAG agent.
+**Goal:** Introduce PydanticAI. Build a production RAG agent with type-safe tooling.
 
 **Lessons:**
 
-### Lesson 1: Introduction to Google ADK
-- What is ADK?
-- ADK vs hand-built: trade-offs
-- Setting up ADK
+### Lesson 1: Introduction to PydanticAI
+- What is PydanticAI?
+- Why use a framework now (after learning the fundamentals)
+- PydanticAI vs hand-built: trade-offs
+- Setting up PydanticAI with Gemini
 
-### Lesson 2: ADK Agents & Tools
-- Defining agents
-- Tool definition
-- Agent configuration
+### Lesson 2: Agents & Tools
+- Defining agents with type hints
+- Tool definition with Pydantic models
+- Dependency injection
+- Result types and validation
 
-### Lesson 3: ADK Memory & State
-- Built-in memory
-- Session management
-- Persisting state
+### Lesson 3: Structured Responses & Validation
+- Response models with Pydantic
+- Automatic retry on validation failure
+- Streaming with structure
 
-### Lesson 4: Generation with Retrieved Context
-- Injecting documents into prompts
-- Context window management
-- Citations & attribution
+### Lesson 4: Multi-turn Conversations
+- Message history
+- Context management
+- System prompts and dynamic instructions
 
 ### Lesson 5: Building the RAG Agent
 - Retrieval as a tool
-- Multi-turn conversations
+- Injecting search results into context
+- Citations and source attribution
 - Query rewriting
 
-**Project:** Postgres RAG Agent — Full RAG agent with ADK, hybrid search, citations
+**Project:** Postgres RAG Agent — Full RAG agent with PydanticAI, hybrid search, citations
 
 ---
 
@@ -256,6 +259,6 @@
 | 1: Foundations | 8 | Timezone Meeting Assistant |
 | 2: Workflows & Agents | 5 | Email Classifier Pipeline |
 | 3: RAG Fundamentals | 6 | Document Search CLI |
-| 4: RAG Agent with ADK | 5 | Postgres RAG Agent |
+| 4: RAG Agent with PydanticAI | 5 | Postgres RAG Agent |
 | 5: Evals & Monitoring | 5 | Eval Suite |
 | 6: Deployment | 4 | Production RAG Agent |
