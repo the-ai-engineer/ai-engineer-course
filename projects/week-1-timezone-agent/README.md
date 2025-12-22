@@ -9,11 +9,13 @@ cd projects/week-1-timezone-agent
 uv sync
 ```
 
-Create a `.env` file with your Gemini API key:
+Copy the sample env file and add your API key:
 
+```bash
+cp .env-sample .env
 ```
-GEMINI_API_KEY=your-key-here
-```
+
+Get your API key at: https://aistudio.google.com/apikey
 
 ## Run
 

@@ -10,12 +10,13 @@ This is an AI engineering course teaching from first principles. No frameworks u
 ai-engineer-course/
 ├── docs/                 # Course outline, templates
 ├── code/
-│   ├── week-1/           # Module 1: Foundations (public)
-│   ├── week-2/           # Module 2: Workflows & Agents
-│   ├── week-3/           # Module 3: RAG Fundamentals
-│   ├── week-4/           # Module 4: RAG Agent with PydanticAI
-│   ├── week-5/           # Module 5: Evals & Monitoring
-│   └── week-6/           # Module 6: Deployment
+│   └── python/
+│       ├── week-1/       # Module 1: Foundations
+│       ├── week-2/       # Module 2: Workflows & Agents
+│       ├── week-3/       # Module 3: RAG Fundamentals
+│       ├── week-4/       # Module 4: RAG Agent with PydanticAI
+│       ├── week-5/       # Module 5: Evals & Monitoring
+│       └── week-6/       # Module 6: Deployment
 ├── lessons/              # Lesson content (gitignored)
 │   ├── week-1/
 │   ├── week-2/
@@ -73,8 +74,80 @@ graph LR
 
 Always consult these docs when writing code examples:
 
-- **Google GenAI SDK**: https://googleapis.github.io/python-genai/
+- **Google Gemini SDK**: https://googleapis.github.io/python-genai/
+- **Gemini API Guide**: https://ai.google.dev/gemini-api/docs
 - **PydanticAI (Module 4+)**: https://ai.pydantic.dev/
+- **Embeddings**: https://ai.google.dev/gemini-api/docs/embeddings
+
+## Gemini API Usage
+
+Use the `google-genai` SDK for all API calls.
+
+**Basic call:**
+```python
+from google import genai
+from google.genai import types
+
+client = genai.Client()
+response = client.models.generate_content(
+    model="gemini-3-flash-preview",
+    contents="Explain what an API is.",
+)
+print(response.text)
+```
+
+**System instructions and config:**
+```python
+response = client.models.generate_content(
+    model="gemini-3-flash-preview",
+    contents="What's the best programming language?",
+    config=types.GenerateContentConfig(
+        system_instruction="You are a helpful assistant.",
+        temperature=0.0,
+    ),
+)
+```
+
+**Structured output with Pydantic:**
+```python
+response = client.models.generate_content(
+    model="gemini-3-flash-preview",
+    contents="Extract the name and age.",
+    config=types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_schema=Person,
+    ),
+)
+person = Person.model_validate_json(response.text)
+```
+
+**Streaming:**
+```python
+for chunk in client.models.generate_content_stream(
+    model="gemini-3-flash-preview",
+    contents="Write a haiku.",
+):
+    print(chunk.text, end="")
+```
+
+**Tool calling (automatic):**
+```python
+response = client.models.generate_content(
+    model="gemini-3-flash-preview",
+    contents="What time is it in Tokyo?",
+    config=types.GenerateContentConfig(
+        tools=[my_function],  # Pass Python functions directly
+    ),
+)
+```
+
+**Async:**
+```python
+response = await client.aio.models.generate_content(
+    model="gemini-3-flash-preview",
+    contents="Hello",
+)
+```
 
 ## Code Guidelines
 
@@ -112,9 +185,9 @@ Always consult these docs when writing code examples:
 ## Running Code
 
 ```bash
-cd code/week-1
+cd code/python/week-1
 uv sync
-uv run python 01_hello_gemini.py
+uv run python 02_api_basics.py
 ```
 
 ## Writing Style
@@ -132,5 +205,5 @@ Key rules:
 
 - `docs/course.md` - Complete course outline
 - `docs/writing-style-guide.md` - How to write lessons
-- `code/week-*/` - Code samples (public)
+- `code/python/week-*/` - Python code samples
 - `lessons/week-*/` - Lesson markdown files (gitignored)

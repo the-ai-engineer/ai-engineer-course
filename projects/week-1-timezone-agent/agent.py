@@ -66,7 +66,7 @@ Be concise and helpful. When users ask about times in cities, use the appropriat
 
 def main():
     chat = client.chats.create(
-        model="gemini-2.5-flash",
+        model="gemini-3-flash-preview",
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             tools=[get_current_time, convert_time],
