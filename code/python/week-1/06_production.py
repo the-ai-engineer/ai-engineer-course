@@ -14,16 +14,24 @@ load_dotenv()
 # Client Configuration
 # =============================================================================
 
-# Default client
+# Default client (2 retries with exponential backoff built-in)
 client = OpenAI()
 
-# Client with custom timeout
-client_with_timeout = OpenAI(
-    timeout=60.0,  # 60 second timeout
+# Client with custom timeout and retries
+client_custom = OpenAI(
+    timeout=60.0,  # 60 second timeout for requests
+    max_retries=5,  # Retry up to 5 times (default is 2)
+)
+
+# Disable retries entirely (for testing or when you handle retries yourself)
+client_no_retry = OpenAI(
+    max_retries=0,
 )
 
 # Async client for concurrent operations
-async_client = AsyncOpenAI()
+async_client = AsyncOpenAI(
+    max_retries=3,
+)
 
 # =============================================================================
 # Streaming

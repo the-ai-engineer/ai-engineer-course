@@ -14,7 +14,9 @@
       "WebFetch(domain:www.skool.com)",
       "WebFetch(domain:academy.datalumina.com)",
       "WebFetch(domain:www.trustpilot.com)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(wc:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
