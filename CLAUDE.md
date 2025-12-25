@@ -74,80 +74,150 @@ graph LR
 
 Always consult these docs when writing code examples:
 
-- **Google Gemini SDK**: https://googleapis.github.io/python-genai/
-- **Gemini API Guide**: https://ai.google.dev/gemini-api/docs
+- **OpenAI Responses API**: https://platform.openai.com/docs/api-reference/responses
+- **OpenAI Python SDK**: https://pypi.org/project/openai/
 - **PydanticAI (Module 4+)**: https://ai.pydantic.dev/
-- **Embeddings**: https://ai.google.dev/gemini-api/docs/embeddings
+- **OpenAI Embeddings**: https://platform.openai.com/docs/guides/embeddings
 
-## Gemini API Usage
+## OpenAI Responses API Usage
 
-Use the `google-genai` SDK for all API calls.
+Use the OpenAI Responses API (NOT Chat Completions) for all API calls. The Responses API is OpenAI's most advanced interface.
 
 **Basic call:**
 ```python
-from google import genai
-from google.genai import types
+from openai import OpenAI
 
-client = genai.Client()
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="Explain what an API is.",
+client = OpenAI()  # Uses OPENAI_API_KEY from environment
+
+response = client.responses.create(
+    model="gpt-5-mini",
+    input="Explain what an API is.",
 )
-print(response.text)
+print(response.output_text)
 ```
 
 **System instructions and config:**
 ```python
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="What's the best programming language?",
-    config=types.GenerateContentConfig(
-        system_instruction="You are a helpful assistant.",
-        temperature=0.0,
-    ),
+response = client.responses.create(
+    model="gpt-5-mini",
+    input="What's the best programming language?",
+    instructions="You are a helpful assistant. Respond in exactly one sentence.",
+    temperature=0.0,
 )
 ```
 
 **Structured output with Pydantic:**
 ```python
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="Extract the name and age.",
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=Person,
-    ),
+from pydantic import BaseModel
+
+class Person(BaseModel):
+    name: str
+    age: int
+
+response = client.responses.parse(
+    model="gpt-5-mini",
+    input=[
+        {"role": "system", "content": "Extract person information from the text."},
+        {"role": "user", "content": "John is 25 years old."},
+    ],
+    text_format=Person,
 )
-person = Person.model_validate_json(response.text)
+person = response.output_parsed
 ```
 
 **Streaming:**
 ```python
-for chunk in client.models.generate_content_stream(
-    model="gemini-3-flash-preview",
-    contents="Write a haiku.",
-):
-    print(chunk.text, end="")
+stream = client.responses.create(
+    model="gpt-5-mini",
+    input="Write a haiku.",
+    stream=True,
+)
+for event in stream:
+    print(event)
 ```
 
-**Tool calling (automatic):**
+**Tool/Function calling:**
 ```python
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="What time is it in Tokyo?",
-    config=types.GenerateContentConfig(
-        tools=[my_function],  # Pass Python functions directly
-    ),
+response = client.responses.create(
+    model="gpt-5-mini",
+    input="What's the weather in Tokyo?",
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get current weather for a location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"}
+                },
+                "required": ["location"],
+            },
+        },
+    }],
+)
+```
+
+**Multi-turn conversations:**
+```python
+# First turn
+response1 = client.responses.create(
+    model="gpt-5-mini",
+    input="My name is Alice.",
+)
+
+# Continue the conversation using previous_response_id
+response2 = client.responses.create(
+    model="gpt-5-mini",
+    input="What's my name?",
+    previous_response_id=response1.id,
 )
 ```
 
 **Async:**
 ```python
-response = await client.aio.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="Hello",
+from openai import AsyncOpenAI
+
+client = AsyncOpenAI()
+
+response = await client.responses.create(
+    model="gpt-5-mini",
+    input="Hello",
 )
 ```
+
+**Image inputs:**
+```python
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "What is in this image?"},
+                {"type": "input_image", "image_url": "https://example.com/image.jpg"},
+            ],
+        }
+    ],
+)
+```
+
+## API Migration Reference
+
+When updating code from Gemini to OpenAI Responses API:
+
+| Gemini | OpenAI Responses API |
+|--------|---------------------|
+| `from google import genai` | `from openai import OpenAI` |
+| `genai.Client()` | `OpenAI()` |
+| `client.models.generate_content()` | `client.responses.create()` |
+| `contents="..."` | `input="..."` |
+| `config=types.GenerateContentConfig(system_instruction="...")` | `instructions="..."` |
+| `response.text` | `response.output_text` |
+| `response_mime_type="application/json", response_schema=Model` | `responses.parse(..., text_format=Model)` |
+| `gemini-3-flash-preview` | `gpt-5-mini` |
+| Message history array | `previous_response_id` |
+| `config=types.GenerateContentConfig(tools=[...])` | `tools=[...]` |
 
 ## Code Guidelines
 

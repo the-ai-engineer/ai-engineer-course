@@ -1,18 +1,19 @@
 """
 Structured Outputs
 
-Get type-safe responses using Pydantic models with the Gemini API.
+Get type-safe responses using Pydantic models with the OpenAI Responses API.
+The responses.parse method provides a cleaner way to get structured data,
+automatically parsing the response into your Pydantic model.
 """
 
 from enum import Enum
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 # =============================================================================
 # Basic Structured Output
@@ -28,17 +29,17 @@ class ContactInfo(BaseModel):
 
 email_text = "Hi! I'm John Smith from Acme Corp. Reach me at john@acme.com or 555-0123."
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=f"Extract contact information:\n{email_text}",
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=ContactInfo,
-    ),
+response = client.responses.parse(
+    model="gpt-5-mini",
+    input=[
+        {"role": "system", "content": "Extract contact information from the text."},
+        {"role": "user", "content": email_text},
+    ],
+    text_format=ContactInfo,
 )
 
-contact = ContactInfo.model_validate_json(response.text)
-contact
+contact = response.output_parsed
+print(contact)
 
 # =============================================================================
 # Enums for Constrained Values
@@ -57,17 +58,17 @@ class Task(BaseModel):
     priority: Priority
 
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="Create a task for fixing the login bug that's blocking users",
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=Task,
-    ),
+response = client.responses.parse(
+    model="gpt-5-mini",
+    input=[
+        {"role": "system", "content": "Create a task from the user's request."},
+        {"role": "user", "content": "Fix the login bug that's blocking users"},
+    ],
+    text_format=Task,
 )
 
-task = Task.model_validate_json(response.text)
-task
+task = response.output_parsed
+print(task)
 
 # =============================================================================
 # Nested Objects
@@ -88,17 +89,17 @@ class Person(BaseModel):
 
 text = "John Doe is a 32-year-old developer in San Francisco, USA. He knows Python and JavaScript."
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=f"Extract person information:\n{text}",
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=Person,
-    ),
+response = client.responses.parse(
+    model="gpt-5-mini",
+    input=[
+        {"role": "system", "content": "Extract person information from the text."},
+        {"role": "user", "content": text},
+    ],
+    text_format=Person,
 )
 
-person = Person.model_validate_json(response.text)
-person
+person = response.output_parsed
+print(person)
 
 # =============================================================================
 # List of Objects
@@ -114,14 +115,14 @@ class ProductList(BaseModel):
     products: list[Product]
 
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="Generate 3 products for a tech store",
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=ProductList,
-    ),
+response = client.responses.parse(
+    model="gpt-5-mini",
+    input=[
+        {"role": "system", "content": "Generate products for a tech store."},
+        {"role": "user", "content": "Generate 3 products"},
+    ],
+    text_format=ProductList,
 )
 
-catalog = ProductList.model_validate_json(response.text)
-catalog.products
+catalog = response.output_parsed
+print(catalog.products)

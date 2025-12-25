@@ -1,24 +1,24 @@
 """
-RAG Strategy 3: Vector Search with Postgres
+RAG Strategy 2: Vector Search with Postgres
 
-Complete pipeline for semantic search using Gemini embeddings,
+Complete pipeline for semantic search using OpenAI embeddings,
 Docling for document processing, and pgvector for storage.
 """
 
 import os
 from pathlib import Path
 
+import tiktoken
 import psycopg
 from pgvector.psycopg import register_vector
 from docling.document_converter import DocumentConverter
 from docling.chunking import HybridChunker
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 # =============================================================================
 # Configuration
@@ -28,13 +28,14 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost/ragdb"
 )
 
-# Embedding dimensions: 768 (fast), 1536 (balanced), 3072 (best quality)
-# 768 recommended for most RAG use cases
-EMBEDDING_DIMENSIONS = 768
+# OpenAI text-embedding-3-small produces 1536 dimensions by default
+EMBEDDING_DIMENSIONS = 1536
 
-# Gemini recommends ~300 tokens for optimal retrieval
-# Using 400 as conservative limit (no local tokenizer like tiktoken)
+# Target ~300 tokens per chunk for optimal retrieval
 MAX_CHUNK_TOKENS = 400
+
+# Tokenizer for counting tokens
+tokenizer = tiktoken.get_encoding("cl100k_base")
 
 
 # =============================================================================
@@ -90,42 +91,36 @@ def init_schema(conn, dimensions: int = EMBEDDING_DIMENSIONS):
 # Embeddings
 # =============================================================================
 
-# Key concept: Use different task types for documents vs queries.
-# This optimizes the embedding for its intended use.
+# OpenAI uses the same model for both document and query embeddings.
+# Unlike Gemini, there are no separate task types.
 
 
-def embed_document(
-    text: str,
-    title: str | None = None,
-    dimensions: int = EMBEDDING_DIMENSIONS,
-) -> list[float]:
-    """Embed a document for storage."""
-    config = types.EmbedContentConfig(
-        task_type="RETRIEVAL_DOCUMENT",
-        output_dimensionality=dimensions,
+def embed_text(text: str) -> list[float]:
+    """Embed text using OpenAI embeddings."""
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text,
     )
-    if title:
-        config.title = title
+    return response.data[0].embedding
 
-    response = client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text,
-        config=config,
+
+def embed_batch(texts: list[str]) -> list[list[float]]:
+    """Embed multiple texts in a single API call."""
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=texts,
     )
-    return response.embeddings[0].values
+    return [item.embedding for item in response.data]
 
 
-def embed_query(text: str, dimensions: int = EMBEDDING_DIMENSIONS) -> list[float]:
-    """Embed a query for searching."""
-    response = client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text,
-        config=types.EmbedContentConfig(
-            task_type="RETRIEVAL_QUERY",
-            output_dimensionality=dimensions,
-        ),
-    )
-    return response.embeddings[0].values
+# =============================================================================
+# Token Counting
+# =============================================================================
+
+
+def count_tokens(text: str) -> int:
+    """Count tokens in text using tiktoken."""
+    return len(tokenizer.encode(text))
 
 
 # =============================================================================
@@ -201,10 +196,7 @@ def index_document(conn, source: str, title: str | None = None) -> int:
 
     # Embed and store each chunk
     for chunk in chunks:
-        embedding = embed_document(
-            chunk["content"],
-            title=chunk["headings"][0] if chunk["headings"] else None,
-        )
+        embedding = embed_text(chunk["content"])
 
         conn.execute(
             """
@@ -253,7 +245,7 @@ def search(conn, query: str, limit: int = 5) -> list[dict]:
 
     Uses cosine distance (<=> operator) - lower = more similar.
     """
-    query_embedding = embed_query(query)
+    query_embedding = embed_text(query)
 
     results = conn.execute(
         """
@@ -302,9 +294,9 @@ def rag_query(conn, question: str, k: int = 5) -> str:
 
     context = "\n\n---\n\n".join(context_parts)
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Answer the question based on the context provided.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Answer the question based on the context provided.
 Cite your sources.
 
 Context:
@@ -313,7 +305,7 @@ Context:
 Question: {question}""",
     )
 
-    return response.text
+    return response.output_text
 
 
 # =============================================================================

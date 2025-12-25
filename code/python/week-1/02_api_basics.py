@@ -1,11 +1,10 @@
 """
 Your First API Call
 
-Basic Gemini API usage: client setup, simple calls, and system instructions.
+Basic OpenAI Responses API usage: client setup, simple calls, and system instructions.
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,51 +13,46 @@ load_dotenv()
 # Client Setup
 # =============================================================================
 
-# Option 1: Google AI Studio (direct API)
-# Best for: learning, prototyping
-# Get your API key at: https://aistudio.google.com/apikey
+# The OpenAI client uses OPENAI_API_KEY from environment by default
+# Get your API key at: https://platform.openai.com/api-keys
 
-client = genai.Client()  # Uses GEMINI_API_KEY from environment
+client = OpenAI()
 
-# Option 2: Vertex AI (Google Cloud)
-# Best for: production
-# Requires: Google Cloud project with Vertex AI API enabled
-#
-# Authentication uses Application Default Credentials (ADC):
-#   - Local dev: run `gcloud auth application-default login`
-#   - Production: uses attached service account automatically (Cloud Run, GCE, GKE)
-#   - Service account key: set GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+# You can also pass the API key explicitly:
+# client = OpenAI(api_key="sk-...")
 
-# client = genai.Client(
-#     vertexai=True,
-#     project="your-gcp-project-id",
-#     location="us-central1",
+# For Azure OpenAI, use the same client with a custom base_url:
+# endpoint = "https://your-resource.openai.azure.com/openai/v1/"
+# client = OpenAI(
+#     base_url=endpoint,
+#     api_key="your-azure-key",
 # )
-
-# The API is identical after setup - same code works with both.
 
 # =============================================================================
 # Simple Call
 # =============================================================================
 
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents="Explain what an API is in one sentence.",
+# The Responses API is OpenAI's most advanced interface
+# Use client.responses.create() instead of chat.completions.create()
+
+response = client.responses.create(
+    model="gpt-5-mini",
+    input="Explain what an API is in one sentence.",
 )
 
-response.text
+response.output_text
 
 # =============================================================================
 # System Instructions
 # =============================================================================
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents="What's the best programming language?",
-    config=types.GenerateContentConfig(
-        system_instruction="You are a helpful assistant. Respond in exactly one sentence.",
-        temperature=0.0,
-    ),
+# Use `instructions` for system-level guidance (replaces system messages)
+
+response = client.responses.create(
+    model="gpt-5-mini",
+    input="What's the best programming language?",
+    instructions="You are a helpful assistant. Respond in exactly one sentence.",
+    temperature=0.0,
 )
 
-response.text
+response.output_text

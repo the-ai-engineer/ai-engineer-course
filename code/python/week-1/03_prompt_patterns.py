@@ -4,13 +4,12 @@ Prompt Patterns
 Core patterns: extraction, classification, few-shot, and delimiters.
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 # =============================================================================
 # Extraction (Unstructured to Structured)
@@ -27,9 +26,9 @@ Best,
 Sarah
 """
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=f"""Extract contact information from this email.
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=f"""Extract contact information from this email.
 
 <email>
 {email_text}
@@ -40,8 +39,10 @@ Name: [name]
 Email: [email]
 Phone: [phone]
 Company: [company]""",
-    config=types.GenerateContentConfig(temperature=0.0),
+    temperature=0.0,
 )
+
+response.output_text
 
 # =============================================================================
 # Classification with Few-Shot
@@ -66,13 +67,13 @@ Sentiment:"""
 
 review = "This product is amazing! Best purchase I've ever made."
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=few_shot_prompt.format(review=review),
-    config=types.GenerateContentConfig(temperature=0.0),
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=few_shot_prompt.format(review=review),
+    temperature=0.0,
 )
 
-response.text
+response.output_text
 
 # =============================================================================
 # Using Delimiters
@@ -84,9 +85,9 @@ billion, up 6% year over year. CEO Tim Cook highlighted strong growth in
 emerging markets, particularly India where sales grew 30%.
 """
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=f"""Summarize the following article.
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=f"""Summarize the following article.
 
 <article>
 {article}
@@ -96,7 +97,7 @@ response = client.models.generate_content(
 - One sentence only
 - Include the key number
 </instructions>""",
-    config=types.GenerateContentConfig(temperature=0.0),
+    temperature=0.0,
 )
 
-response.text
+response.output_text

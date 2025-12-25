@@ -1,4 +1,4 @@
-"""Pydantic models for API requests and responses."""
+"""Pydantic schemas for API requests and responses."""
 
 from pydantic import BaseModel, Field
 
@@ -32,6 +32,19 @@ class SearchResponse(BaseModel):
     query: str
     results: list[SearchResult]
     total: int
+
+
+# =============================================================================
+# Agent Tool Response
+# =============================================================================
+
+
+class PolicyResult(BaseModel):
+    """A policy search result returned by the agent tool."""
+
+    source: str
+    content: str
+    score: float
 
 
 # =============================================================================

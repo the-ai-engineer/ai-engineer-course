@@ -9,9 +9,10 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     database_url: str = "postgresql://postgres:postgres@localhost/ragdb"
-    embedding_model: str = "gemini-embedding-001"
-    embedding_dimensions: int = 768
-    generation_model: str = "gemini-2.0-flash"
+    openai_api_key: str | None = None
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
+    generation_model: str = "gpt-5-mini"
 
     class Config:
         env_file = ".env"

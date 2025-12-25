@@ -1,20 +1,19 @@
 """
 Multi-Modal Inputs
 
-Analyze images using Gemini's native multimodal capabilities.
-Gemini supports images, audio, video, and PDFs in a unified API.
+Analyze and generate images using OpenAI's multimodal capabilities.
 """
 
+import base64
 import httpx
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pathlib import Path
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 # =============================================================================
 # Analyze Image from URL
@@ -22,18 +21,20 @@ client = genai.Client()
 
 image_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/300px-PNG_transparency_demonstration_1.png"
 
-# Download image and create Part
-image_data = httpx.get(image_url).content
-
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=[
-        types.Part.from_text("Describe what you see in this image in one sentence."),
-        types.Part.from_bytes(data=image_data, mime_type="image/png"),
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Describe what you see in this image in one sentence."},
+                {"type": "input_image", "image_url": image_url},
+            ],
+        }
     ],
 )
 
-response.text
+response.output_text
 
 # =============================================================================
 # Structured Image Analysis
@@ -46,23 +47,33 @@ class ImageAnalysis(BaseModel):
     colors: list[str]
 
 
-response = client.models.generate_content(
-    model="gemini-3-flash-preview",
-    contents=[
-        types.Part.from_text("Analyze this image."),
-        types.Part.from_bytes(data=image_data, mime_type="image/png"),
+response = client.responses.create(
+    model="gpt-5-mini",
+    input=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_text", "text": "Analyze this image."},
+                {"type": "input_image", "image_url": image_url},
+            ],
+        }
     ],
-    config=types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=ImageAnalysis,
-    ),
+    text={
+        "format": {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "image_analysis",
+                "schema": ImageAnalysis.model_json_schema(),
+            },
+        }
+    },
 )
 
-analysis = ImageAnalysis.model_validate_json(response.text)
+analysis = ImageAnalysis.model_validate_json(response.output_text)
 analysis
 
 # =============================================================================
-# Analyze Local Image
+# Analyze Local Image (Base64)
 # =============================================================================
 
 
@@ -81,42 +92,104 @@ def analyze_local_image(image_path: str, prompt: str) -> str:
     }
     mime_type = mime_types.get(path.suffix.lower(), "image/png")
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=[
-            types.Part.from_text(prompt),
-            types.Part.from_bytes(data=path.read_bytes(), mime_type=mime_type),
+    # Encode image as base64
+    image_data = base64.standard_b64encode(path.read_bytes()).decode("utf-8")
+    data_url = f"data:{mime_type};base64,{image_data}"
+
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": data_url},
+                ],
+            }
         ],
     )
-    return response.text
+    return response.output_text
 
 
 # Example: analyze_local_image("screenshot.png", "What's in this screenshot?")
 
 
 # =============================================================================
-# Generate Images with Imagen 4
+# Image Classification
 # =============================================================================
 
-# Available models:
-#   - imagen-4.0-generate-001      (standard)
-#   - imagen-4.0-ultra-generate-001 (highest quality)
-#   - imagen-4.0-fast-generate-001  (fastest)
+
+class ImageClassification(BaseModel):
+    category: str
+    confidence: str
+    reasoning: str
+
+
+def classify_image(image_url: str, categories: list[str]) -> ImageClassification:
+    """Classify an image into one of the provided categories."""
+    categories_str = ", ".join(categories)
+
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": f"Classify this image into one of these categories: {categories_str}",
+                    },
+                    {"type": "input_image", "image_url": image_url},
+                ],
+            }
+        ],
+        text={
+            "format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "image_classification",
+                    "schema": ImageClassification.model_json_schema(),
+                },
+            }
+        },
+    )
+    return ImageClassification.model_validate_json(response.output_text)
+
+
+# Example usage:
+# result = classify_image(
+#     "https://example.com/photo.jpg",
+#     ["landscape", "portrait", "product", "document", "screenshot"]
+# )
+
+
+# =============================================================================
+# Generate Images with GPT-Image-1
+# =============================================================================
 
 
 def generate_image(prompt: str, output_path: str = "generated.png") -> str:
-    """Generate an image from a text prompt using Imagen 4."""
-    response = client.models.generate_images(
-        model="imagen-4.0-generate-001",
+    """Generate an image from a text prompt using GPT-Image-1."""
+    response = client.images.generate(
+        model="gpt-image-1",
         prompt=prompt,
-        config=types.GenerateImagesConfig(
-            number_of_images=1,
-            aspect_ratio="1:1",
-        ),
+        n=1,
+        size="1024x1024",
     )
 
-    # Save the first generated image
-    response.generated_images[0].image.save(output_path)
+    # Get the image URL or base64 data
+    image_data = response.data[0]
+
+    if image_data.b64_json:
+        # Save base64 image
+        import base64
+        image_bytes = base64.b64decode(image_data.b64_json)
+        Path(output_path).write_bytes(image_bytes)
+    elif image_data.url:
+        # Download from URL
+        image_bytes = httpx.get(image_data.url).content
+        Path(output_path).write_bytes(image_bytes)
+
     return output_path
 
 
@@ -129,3 +202,46 @@ def generate_image(prompt: str, output_path: str = "generated.png") -> str:
 #     "soft studio lighting, minimalist style",
 #     "laptop.png"
 # )
+
+
+# =============================================================================
+# Edit Images with GPT-Image-1
+# =============================================================================
+
+
+def edit_image(
+    image_path: str,
+    prompt: str,
+    output_path: str = "edited.png",
+    mask_path: str | None = None,
+) -> str:
+    """Edit an existing image based on a text prompt."""
+    with open(image_path, "rb") as image_file:
+        kwargs = {
+            "model": "gpt-image-1",
+            "image": image_file,
+            "prompt": prompt,
+            "n": 1,
+            "size": "1024x1024",
+        }
+
+        if mask_path:
+            with open(mask_path, "rb") as mask_file:
+                kwargs["mask"] = mask_file
+                response = client.images.edit(**kwargs)
+        else:
+            response = client.images.edit(**kwargs)
+
+    # Save the edited image
+    image_data = response.data[0]
+    if image_data.b64_json:
+        image_bytes = base64.b64decode(image_data.b64_json)
+        Path(output_path).write_bytes(image_bytes)
+    elif image_data.url:
+        image_bytes = httpx.get(image_data.url).content
+        Path(output_path).write_bytes(image_bytes)
+
+    return output_path
+
+
+# Example: edit_image("photo.png", "Add a sunset sky in the background")

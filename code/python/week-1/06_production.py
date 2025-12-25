@@ -1,35 +1,29 @@
 """
 Production Concerns
 
-Streaming and async with the Gemini API.
+Streaming and async with the OpenAI Responses API.
 """
 
 import asyncio
-
-import nest_asyncio
-from google import genai
-from google.genai import types
+from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Allow nested event loops (needed for Jupyter/ipykernel)
-nest_asyncio.apply()
 
 # =============================================================================
 # Client Configuration
 # =============================================================================
 
-# Default client - uses built-in retry logic
-client = genai.Client()
+# Default client
+client = OpenAI()
 
-# Client with custom timeout (in seconds)
-# The SDK uses httpx, so you can pass httpx client args
-client_with_timeout = genai.Client(
-    http_options=types.HttpOptions(
-        timeout=60.0,  # 60 second timeout
-    )
+# Client with custom timeout
+client_with_timeout = OpenAI(
+    timeout=60.0,  # 60 second timeout
 )
+
+# Async client for concurrent operations
+async_client = AsyncOpenAI()
 
 # =============================================================================
 # Streaming
@@ -37,12 +31,15 @@ client_with_timeout = genai.Client(
 
 # Streaming shows text as it's generated - better UX for chat interfaces
 
-response = client.models.generate_content_stream(
-    model="gemini-2.5-flash",
-    contents="Write a story.",
+stream = client.responses.create(
+    model="gpt-5-mini",
+    input="Write a short story about a robot.",
+    stream=True,
 )
-for chunk in response:
-    print(chunk.text, end="")
+
+for event in stream:
+    # Events contain different types of data as the response streams
+    print(event)
 
 # =============================================================================
 # Async for Concurrent Calls
@@ -51,11 +48,11 @@ for chunk in response:
 
 async def analyze_topic(topic: str) -> str:
     """Analyze a single topic."""
-    response = await client.aio.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=f"Explain {topic} in one sentence.",
+    response = await async_client.responses.create(
+        model="gpt-5-mini",
+        input=f"Explain {topic} in one sentence.",
     )
-    return response.text
+    return response.output_text
 
 
 async def concurrent_example():
@@ -63,3 +60,72 @@ async def concurrent_example():
     topics = ["REST APIs", "GraphQL", "WebSockets"]
     results = await asyncio.gather(*[analyze_topic(t) for t in topics])
     return results
+
+
+# Run: asyncio.run(concurrent_example())
+
+# =============================================================================
+# Multi-turn Conversations
+# =============================================================================
+
+# OpenAI provides multiple ways to manage conversation state:
+# 1. previous_response_id - Chain responses together (OpenAI stores context)
+# 2. Manual message history - Build your own history array (full control)
+
+
+def chat_with_previous_id():
+    """Use previous_response_id to chain responses (OpenAI manages state)."""
+    # First message
+    response1 = client.responses.create(
+        model="gpt-5-mini",
+        input="My name is Alice and I'm learning Python.",
+        instructions="You are a helpful programming tutor.",
+    )
+    print(f"Assistant: {response1.output_text}\n")
+
+    # Follow-up using previous_response_id
+    response2 = client.responses.create(
+        model="gpt-5-mini",
+        input="What should I learn first?",
+        previous_response_id=response1.id,
+    )
+    print(f"Assistant: {response2.output_text}\n")
+
+    return response2
+
+
+def chat_with_manual_history():
+    """Manually manage conversation history (you control the state)."""
+    history = [
+        {"role": "user", "content": "My name is Alice and I'm learning Python."}
+    ]
+
+    # First response
+    response1 = client.responses.create(
+        model="gpt-5-mini",
+        input=history,
+        instructions="You are a helpful programming tutor.",
+        store=False,  # Don't store on OpenAI's servers
+    )
+    print(f"Assistant: {response1.output_text}\n")
+
+    # Add assistant response to history
+    history.append({"role": "assistant", "content": response1.output_text})
+
+    # Add next user message
+    history.append({"role": "user", "content": "What should I learn first?"})
+
+    # Second response with full history
+    response2 = client.responses.create(
+        model="gpt-5-mini",
+        input=history,
+        instructions="You are a helpful programming tutor.",
+        store=False,
+    )
+    print(f"Assistant: {response2.output_text}\n")
+
+    return response2, history
+
+
+# chat_with_previous_id()
+# chat_with_manual_history()

@@ -1,16 +1,16 @@
 """
 The Agent Loop
 
-A simple ReAct agent built from scratch.
+A simple ReAct agent built from scratch using the OpenAI Responses API.
 """
 
-from google import genai
-from google.genai import types
+import json
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 
 # =============================================================================
@@ -83,30 +83,86 @@ def read_file(path: str) -> str:
 
 
 # =============================================================================
+# Tool Definitions
+# =============================================================================
+
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_datetime",
+            "description": "Get the current date, time, and timezone",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_url",
+            "description": "Fetch the content of a webpage",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "The URL to fetch (must start with https://)",
+                    }
+                },
+                "required": ["url"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the contents of a local file",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to read",
+                    }
+                },
+                "required": ["path"],
+            },
+        },
+    },
+]
+
+TOOL_MAP = {
+    "get_current_datetime": get_current_datetime,
+    "fetch_url": fetch_url,
+    "read_file": read_file,
+}
+
+
+# =============================================================================
 # Agent Class
 # =============================================================================
 
 
 class Agent:
     """
-    A simple ReAct agent.
+    A simple ReAct agent using the OpenAI Responses API.
 
     Usage:
-        agent = Agent(tools=[get_current_datetime, fetch_url])
+        agent = Agent(tools=TOOLS, tool_map=TOOL_MAP)
         answer = agent.run("What time is it?")
     """
 
     def __init__(
         self,
         tools: list = None,
-        model: str = "gemini-3-flash-preview",
+        tool_map: dict = None,
+        model: str = "gpt-5-mini",
         system_prompt: str = None,
     ):
         self.tools = tools or []
-        self.tool_map = {f.__name__: f for f in self.tools}
+        self.tool_map = tool_map or {}
         self.model = model
         self.system_prompt = system_prompt or self._default_prompt()
-        self.messages = []  # Conversation history
 
     def _default_prompt(self) -> str:
         return """You are a helpful assistant that can use tools to answer questions.
@@ -130,67 +186,57 @@ When you have the final answer, respond directly without calling more tools."""
         Returns:
             The agent's final answer
         """
-        # Reset messages for new run
-        self.messages = []
-
         if verbose:
             print(f"Goal: {goal}\n")
 
-        # Add user goal to messages
-        self.messages.append(
-            types.Content(role="user", parts=[types.Part.from_text(goal)])
+        # Initial request
+        response = client.responses.create(
+            model=self.model,
+            input=goal,
+            instructions=self.system_prompt,
+            tools=self.tools,
         )
 
         for i in range(max_iterations):
             if verbose:
                 print(f"--- Step {i + 1} ---")
 
-            # Call model with full message history
-            response = client.models.generate_content(
-                model=self.model,
-                contents=self.messages,
-                config=types.GenerateContentConfig(
-                    system_instruction=self.system_prompt,
-                    tools=self.tools,
-                ),
-            )
-
-            # Add assistant response to messages
-            self.messages.append(response.candidates[0].content)
-
             # Check for tool calls
-            parts = response.candidates[0].content.parts
-            tool_calls = [p for p in parts if p.function_call]
+            tool_calls = [item for item in response.output if item.type == "function_call"]
 
             if not tool_calls:
                 # No tool calls = final answer
                 if verbose:
-                    print(f"Answer: {response.text}\n")
-                return response.text
+                    print(f"Answer: {response.output_text}\n")
+                return response.output_text
 
             # Execute tools and collect results
             tool_results = []
-            for part in tool_calls:
-                fc = part.function_call
-                func = self.tool_map.get(fc.name)
+            for call in tool_calls:
+                func = self.tool_map.get(call.name)
 
                 if func:
-                    result = func(**fc.args)
+                    args = json.loads(call.arguments) if call.arguments else {}
+                    result = func(**args)
                     if verbose:
-                        print(f"Tool: {fc.name}({fc.args})")
-                        print(f"Result: {result[:200]}..." if len(result) > 200 else f"Result: {result}")
+                        print(f"Tool: {call.name}({args})")
+                        print(f"Result: {result[:200]}..." if len(str(result)) > 200 else f"Result: {result}")
                 else:
-                    result = f"Unknown tool: {fc.name}"
+                    result = f"Unknown tool: {call.name}"
 
-                tool_results.append(
-                    types.Part.from_function_response(
-                        name=fc.name,
-                        response={"result": result},
-                    )
-                )
+                tool_results.append({
+                    "type": "function_call_output",
+                    "call_id": call.call_id,
+                    "output": str(result),
+                })
 
-            # Add tool results to messages
-            self.messages.append(types.Content(role="user", parts=tool_results))
+            # Continue with tool results
+            response = client.responses.create(
+                model=self.model,
+                input=tool_results,
+                previous_response_id=response.id,
+                tools=self.tools,
+            )
 
         return "Max iterations reached"
 
@@ -214,6 +260,29 @@ def run_bash(command: str) -> str:
     return result.stdout or "Command completed successfully"
 
 
+BASH_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "run_bash",
+            "description": "Run a bash command and return the output",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "The bash command to execute",
+                    }
+                },
+                "required": ["command"],
+            },
+        },
+    },
+]
+
+BASH_TOOL_MAP = {"run_bash": run_bash}
+
+
 class AgentWithApproval:
     """
     An agent that requires human approval before executing tools.
@@ -228,14 +297,14 @@ class AgentWithApproval:
     def __init__(
         self,
         tools: list = None,
-        model: str = "gemini-3-flash-preview",
+        tool_map: dict = None,
+        model: str = "gpt-5-mini",
         system_prompt: str = None,
     ):
         self.tools = tools or []
-        self.tool_map = {f.__name__: f for f in self.tools}
+        self.tool_map = tool_map or {}
         self.model = model
         self.system_prompt = system_prompt or self._default_prompt()
-        self.messages = []
 
     def _default_prompt(self) -> str:
         return """You are a helpful assistant that can run bash commands.
@@ -252,60 +321,56 @@ Be careful with destructive commands."""
 
     def run(self, goal: str, max_iterations: int = 5) -> str:
         """Run agent with human approval for each tool call."""
-        self.messages = []
-
         print(f"Goal: {goal}\n")
 
-        self.messages.append(
-            types.Content(role="user", parts=[types.Part.from_text(goal)])
+        response = client.responses.create(
+            model=self.model,
+            input=goal,
+            instructions=self.system_prompt,
+            tools=self.tools,
         )
 
         for i in range(max_iterations):
             print(f"--- Step {i + 1} ---")
 
-            response = client.models.generate_content(
-                model=self.model,
-                contents=self.messages,
-                config=types.GenerateContentConfig(
-                    system_instruction=self.system_prompt,
-                    tools=self.tools,
-                ),
-            )
-
-            self.messages.append(response.candidates[0].content)
-
-            parts = response.candidates[0].content.parts
-            tool_calls = [p for p in parts if p.function_call]
+            # Check for tool calls
+            tool_calls = [item for item in response.output if item.type == "function_call"]
 
             if not tool_calls:
-                print(f"Answer: {response.text}\n")
-                return response.text
+                print(f"Answer: {response.output_text}\n")
+                return response.output_text
 
             # Execute tools WITH APPROVAL
             tool_results = []
-            for part in tool_calls:
-                fc = part.function_call
-                func = self.tool_map.get(fc.name)
+            for call in tool_calls:
+                func = self.tool_map.get(call.name)
 
                 if func:
+                    args = json.loads(call.arguments) if call.arguments else {}
+
                     # Ask for approval
-                    if self._get_approval(fc.name, fc.args):
-                        result = func(**fc.args)
-                        print(f"Result: {result[:200]}..." if len(result) > 200 else f"Result: {result}")
+                    if self._get_approval(call.name, args):
+                        result = func(**args)
+                        print(f"Result: {result[:200]}..." if len(str(result)) > 200 else f"Result: {result}")
                     else:
                         result = "Tool execution denied by user"
                         print("Denied")
                 else:
-                    result = f"Unknown tool: {fc.name}"
+                    result = f"Unknown tool: {call.name}"
 
-                tool_results.append(
-                    types.Part.from_function_response(
-                        name=fc.name,
-                        response={"result": result},
-                    )
-                )
+                tool_results.append({
+                    "type": "function_call_output",
+                    "call_id": call.call_id,
+                    "output": str(result),
+                })
 
-            self.messages.append(types.Content(role="user", parts=tool_results))
+            # Continue with tool results
+            response = client.responses.create(
+                model=self.model,
+                input=tool_results,
+                previous_response_id=response.id,
+                tools=self.tools,
+            )
 
         return "Max iterations reached"
 
@@ -315,7 +380,7 @@ Be careful with destructive commands."""
 # =============================================================================
 
 # Basic agent with tools
-agent = Agent(tools=[get_current_datetime, fetch_url, read_file])
+agent = Agent(tools=TOOLS, tool_map=TOOL_MAP)
 
 # agent.run("What is the current date and time?")
 # agent.run("Fetch the Python homepage and tell me what Python is")
@@ -323,7 +388,7 @@ agent = Agent(tools=[get_current_datetime, fetch_url, read_file])
 
 
 # Agent with approval for dangerous tools
-bash_agent = AgentWithApproval(tools=[run_bash])
+bash_agent = AgentWithApproval(tools=BASH_TOOLS, tool_map=BASH_TOOL_MAP)
 
 # bash_agent.run("List the files in the current directory")
 # bash_agent.run("What processes are running on this machine?")

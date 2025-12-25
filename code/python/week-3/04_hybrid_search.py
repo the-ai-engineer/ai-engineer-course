@@ -1,5 +1,5 @@
 """
-RAG Strategy 4: Hybrid Search
+RAG Strategy 3: Hybrid Search
 
 Combine vector similarity with keyword matching for better retrieval.
 Vector search finds semantic matches; full-text finds exact terms.
@@ -9,19 +9,18 @@ import os
 
 import psycopg
 from pgvector.psycopg import register_vector
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost/ragdb"
 )
 
-EMBEDDING_DIMENSIONS = 768
+EMBEDDING_DIMENSIONS = 1536
 
 
 # =============================================================================
@@ -63,17 +62,13 @@ def add_fulltext_column(conn):
 # =============================================================================
 
 
-def embed_query(text: str) -> list[float]:
-    """Embed a query for searching."""
-    response = client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text,
-        config=types.EmbedContentConfig(
-            task_type="RETRIEVAL_QUERY",
-            output_dimensionality=EMBEDDING_DIMENSIONS,
-        ),
+def embed_text(text: str) -> list[float]:
+    """Embed text using OpenAI embeddings."""
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text,
     )
-    return response.embeddings[0].values
+    return response.data[0].embedding
 
 
 # =============================================================================
@@ -169,7 +164,7 @@ def search_hybrid(conn, query: str, limit: int = 5) -> list[dict]:
 
     Gets candidates from both methods, combines with RRF.
     """
-    query_embedding = embed_query(query)
+    query_embedding = embed_text(query)
 
     # Get candidates from both methods (2x limit for better fusion)
     vector_results = search_vector(conn, query_embedding, limit=limit * 2)
@@ -259,7 +254,7 @@ def create_hybrid_search_function(conn):
 
 def search_hybrid_sql(conn, query: str, limit: int = 5) -> list[dict]:
     """Use the SQL-native hybrid search function."""
-    query_embedding = embed_query(query)
+    query_embedding = embed_text(query)
 
     results = conn.execute(
         "SELECT * FROM hybrid_search(%s, %s, %s)",
@@ -288,9 +283,9 @@ def rag_hybrid(conn, question: str, k: int = 5) -> str:
         f"[{r['source']}]\n{r['content']}" for r in results
     )
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Answer based on the context. Cite sources.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Answer based on the context. Cite sources.
 
 Context:
 {context}
@@ -298,7 +293,7 @@ Context:
 Question: {question}""",
     )
 
-    return response.text
+    return response.output_text
 
 
 # =============================================================================
@@ -315,7 +310,7 @@ if __name__ == "__main__":
     # create_hybrid_search_function(conn)
 
     # Vector search only
-    # embedding = embed_query("password reset")
+    # embedding = embed_text("password reset")
     # vector_results = search_vector(conn, embedding, limit=5)
 
     # Full-text search only

@@ -5,14 +5,13 @@ Fetch emails from Gmail and classify them using structured output.
 Demonstrates: structured output, working with APIs, simple workflows.
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 
 # =============================================================================
@@ -73,9 +72,9 @@ SAMPLE_EMAILS = [
 
 def classify_email(email: dict) -> EmailClassification:
     """Classify an email using structured output."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Classify this email.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Classify this email.
 
 Categories:
 - support: Customer needs help with a problem
@@ -88,13 +87,19 @@ From: {email['sender']}
 Subject: {email['subject']}
 
 {email['body'][:500]}""",
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            response_schema=EmailClassification,
-        ),
+        text={
+            "format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "email_classification",
+                    "schema": EmailClassification.model_json_schema(),
+                },
+            }
+        },
+        temperature=0.0,
     )
 
-    return EmailClassification.model_validate_json(response.text)
+    return EmailClassification.model_validate_json(response.output_text)
 
 
 # =============================================================================

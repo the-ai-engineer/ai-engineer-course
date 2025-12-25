@@ -5,14 +5,14 @@ Multi-step AI pipelines: sequential, parallel, and conditional patterns.
 """
 
 import asyncio
-from google import genai
-from google.genai import types
+from openai import OpenAI, AsyncOpenAI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
+async_client = AsyncOpenAI()
 
 # =============================================================================
 # Sequential Workflow
@@ -21,32 +21,32 @@ client = genai.Client()
 
 def summarize(text: str) -> str:
     """Step 1: Summarize the text."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Summarize in 2-3 sentences:\n\n{text}",
-        config=types.GenerateContentConfig(temperature=0.0),
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Summarize in 2-3 sentences:\n\n{text}",
+        temperature=0.0,
     )
-    return response.text
+    return response.output_text
 
 
 def extract_keywords(text: str) -> list[str]:
     """Step 2: Extract keywords."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Extract 5 keywords, comma-separated:\n\n{text}",
-        config=types.GenerateContentConfig(temperature=0.0),
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Extract 5 keywords, comma-separated:\n\n{text}",
+        temperature=0.0,
     )
-    return [k.strip() for k in response.text.split(",")]
+    return [k.strip() for k in response.output_text.split(",")]
 
 
 def generate_title(summary: str, keywords: list[str]) -> str:
     """Step 3: Generate a title."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Generate a short title.\nSummary: {summary}\nKeywords: {keywords}",
-        config=types.GenerateContentConfig(temperature=0.0),
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Generate a short title.\nSummary: {summary}\nKeywords: {keywords}",
+        temperature=0.0,
     )
-    return response.text.strip()
+    return response.output_text.strip()
 
 
 def sequential_workflow(article: str) -> dict:
@@ -68,27 +68,27 @@ def sequential_workflow(article: str) -> dict:
 
 
 async def async_summarize(text: str) -> str:
-    response = await client.aio.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Summarize in 2-3 sentences:\n\n{text}",
+    response = await async_client.responses.create(
+        model="gpt-5-mini",
+        input=f"Summarize in 2-3 sentences:\n\n{text}",
     )
-    return response.text
+    return response.output_text
 
 
 async def async_sentiment(text: str) -> str:
-    response = await client.aio.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Analyze sentiment (positive/negative/neutral):\n\n{text}",
+    response = await async_client.responses.create(
+        model="gpt-5-mini",
+        input=f"Analyze sentiment (positive/negative/neutral):\n\n{text}",
     )
-    return response.text.strip().lower()
+    return response.output_text.strip().lower()
 
 
 async def async_keywords(text: str) -> list[str]:
-    response = await client.aio.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Extract 5 keywords, comma-separated:\n\n{text}",
+    response = await async_client.responses.create(
+        model="gpt-5-mini",
+        input=f"Extract 5 keywords, comma-separated:\n\n{text}",
     )
-    return [k.strip() for k in response.text.split(",")]
+    return [k.strip() for k in response.output_text.split(",")]
 
 
 async def parallel_workflow(text: str) -> dict:
@@ -113,35 +113,35 @@ async def parallel_workflow(text: str) -> dict:
 
 def classify_email(email: str) -> str:
     """Classify email type."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Classify this email as exactly one of: support, sales, spam
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Classify this email as exactly one of: support, sales, spam
 
 Email:
 {email}
 
 Category:""",
-        config=types.GenerateContentConfig(temperature=0.0),
+        temperature=0.0,
     )
-    return response.text.strip().lower()
+    return response.output_text.strip().lower()
 
 
 def handle_support(email: str) -> str:
     """Generate support response."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Draft a helpful support response:\n\n{email}",
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Draft a helpful support response:\n\n{email}",
     )
-    return response.text
+    return response.output_text
 
 
 def handle_sales(email: str) -> str:
     """Generate sales follow-up."""
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Draft a sales follow-up response:\n\n{email}",
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Draft a sales follow-up response:\n\n{email}",
     )
-    return response.text
+    return response.output_text
 
 
 def conditional_workflow(email: str) -> dict:
@@ -185,11 +185,11 @@ def structured_workflow(text: str) -> ProcessedDocument:
     title = generate_title(summary, keywords)
 
     # Get sentiment separately
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"Sentiment (positive/negative/neutral): {text[:500]}",
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"Sentiment (positive/negative/neutral): {text[:500]}",
     )
-    sentiment = response.text.strip().lower()
+    sentiment = response.output_text.strip().lower()
 
     return ProcessedDocument(
         original=text,

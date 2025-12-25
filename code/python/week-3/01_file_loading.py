@@ -5,14 +5,13 @@ The simplest approach - load the entire file into the prompt.
 No embeddings, no database, no chunking.
 """
 
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from dotenv import load_dotenv
 import json
 
 load_dotenv()
 
-client = genai.Client()
+client = OpenAI()
 
 
 # =============================================================================
@@ -25,9 +24,9 @@ def answer_from_file(question: str, file_path: str) -> str:
     with open(file_path) as f:
         content = f.read()
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Use the following document to answer the question.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Use the following document to answer the question.
 If the answer isn't in the document, say so.
 
 Document:
@@ -35,7 +34,7 @@ Document:
 
 Question: {question}""",
     )
-    return response.text
+    return response.output_text
 
 
 def answer_from_files(question: str, file_paths: list[str]) -> str:
@@ -47,16 +46,16 @@ def answer_from_files(question: str, file_paths: list[str]) -> str:
 
     combined = "\n\n".join(contents)
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""Use these documents to answer the question.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=f"""Use these documents to answer the question.
 
 Documents:
 {combined}
 
 Question: {question}""",
     )
-    return response.text
+    return response.output_text
 
 
 # =============================================================================
@@ -74,10 +73,10 @@ def answer_faq(question: str, faq_path: str) -> str:
         f"Q: {item['question']}\nA: {item['answer']}" for item in faqs["faqs"]
     )
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=f"""You are a helpful customer service assistant.
-Answer the customer's question using ONLY the FAQ information below.
+    response = client.responses.create(
+        model="gpt-5-mini",
+        instructions="You are a helpful customer service assistant.",
+        input=f"""Answer the customer's question using ONLY the FAQ information below.
 If the question isn't covered, say you don't have that information.
 
 FAQ:
@@ -85,7 +84,7 @@ FAQ:
 
 Customer question: {question}""",
     )
-    return response.text
+    return response.output_text
 
 
 # =============================================================================
@@ -99,19 +98,17 @@ def create_file_qa_agent(file_path: str):
         content = f.read()
 
     def ask(question: str) -> str:
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=question,
-            config=types.GenerateContentConfig(
-                system_instruction=f"""You are a helpful assistant that answers questions
+        response = client.responses.create(
+            model="gpt-5-mini",
+            instructions=f"""You are a helpful assistant that answers questions
 about the following document. Only use information from this document.
 If something isn't covered, say so clearly.
 
 Document:
-{content}"""
-            ),
+{content}""",
+            input=question,
         )
-        return response.text
+        return response.output_text
 
     return ask
 
