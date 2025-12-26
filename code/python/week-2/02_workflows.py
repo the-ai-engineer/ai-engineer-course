@@ -170,34 +170,15 @@ def conditional_workflow(email: str) -> dict:
 # =============================================================================
 
 
-class ProcessedDocument(BaseModel):
-    original: str
-    summary: str
-    keywords: list[str]
-    sentiment: str
-    title: str
+class ProcessedEmail(BaseModel):
+    email: str
+    category: str
 
 
-def structured_workflow(text: str) -> ProcessedDocument:
-    """Full workflow returning a structured result."""
-    summary = summarize(text)
-    keywords = extract_keywords(text)
-    title = generate_title(summary, keywords)
-
-    # Get sentiment separately
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=f"Sentiment (positive/negative/neutral): {text[:500]}",
-    )
-    sentiment = response.output_text.strip().lower()
-
-    return ProcessedDocument(
-        original=text,
-        summary=summary,
-        keywords=keywords,
-        sentiment=sentiment,
-        title=title,
-    )
+def process_email(email: str) -> ProcessedEmail:
+    """Classify an email and return structured result."""
+    category = classify_email(email)
+    return ProcessedEmail(email=email, category=category)
 
 
 # =============================================================================
@@ -225,5 +206,5 @@ result = conditional_workflow(email)
 result
 
 # Structured
-doc = structured_workflow(article)
-doc
+processed = process_email(email)
+processed

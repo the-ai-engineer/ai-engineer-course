@@ -1,19 +1,6 @@
 """Pydantic schemas for API requests and responses."""
 
-from pydantic import BaseModel, Field
-
-
-# =============================================================================
-# Search
-# =============================================================================
-
-
-class SearchRequest(BaseModel):
-    """Search request parameters."""
-
-    query: str
-    limit: int = 5
-    search_type: str = "hybrid"  # vector, keyword, hybrid
+from pydantic import BaseModel
 
 
 class SearchResult(BaseModel):
@@ -22,21 +9,7 @@ class SearchResult(BaseModel):
     chunk_id: int
     source: str
     content: str
-    metadata: dict = Field(default_factory=dict)
     score: float
-
-
-class SearchResponse(BaseModel):
-    """Search response with results."""
-
-    query: str
-    results: list[SearchResult]
-    total: int
-
-
-# =============================================================================
-# Agent Tool Response
-# =============================================================================
 
 
 class PolicyResult(BaseModel):
@@ -47,17 +20,11 @@ class PolicyResult(BaseModel):
     score: float
 
 
-# =============================================================================
-# RAG
-# =============================================================================
-
-
 class RAGRequest(BaseModel):
     """RAG query request."""
 
     question: str
     limit: int = 5
-    search_type: str = "hybrid"
 
 
 class RAGResponse(BaseModel):
@@ -66,14 +33,3 @@ class RAGResponse(BaseModel):
     question: str
     answer: str
     sources: list[SearchResult]
-
-
-# =============================================================================
-# Stats
-# =============================================================================
-
-
-class StatsResponse(BaseModel):
-    """Database statistics response."""
-
-    chunks: int

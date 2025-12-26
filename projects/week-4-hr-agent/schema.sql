@@ -12,9 +12,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     source TEXT NOT NULL,
     content TEXT NOT NULL,
-    embedding vector(768),
+    embedding vector(1536),
     fts TSVECTOR GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
-    metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -28,9 +27,6 @@ CREATE INDEX IF NOT EXISTS chunks_embedding_idx
 CREATE INDEX IF NOT EXISTS chunks_fts_idx
     ON chunks USING gin (fts);
 
-CREATE INDEX IF NOT EXISTS chunks_metadata_idx
-    ON chunks USING gin (metadata);
-
 CREATE INDEX IF NOT EXISTS chunks_source_idx
     ON chunks (source);
 
@@ -40,14 +36,13 @@ CREATE INDEX IF NOT EXISTS chunks_source_idx
 
 -- Vector (semantic) search
 CREATE OR REPLACE FUNCTION vector_search(
-    query_embedding vector(768),
+    query_embedding vector(1536),
     match_count INT DEFAULT 5
 )
 RETURNS TABLE (
     id BIGINT,
     source TEXT,
     content TEXT,
-    metadata JSONB,
     score FLOAT
 )
 LANGUAGE sql STABLE
@@ -56,7 +51,6 @@ AS $$
         id,
         source,
         content,
-        metadata,
         1 - (embedding <=> query_embedding) AS score
     FROM chunks
     WHERE embedding IS NOT NULL
@@ -73,7 +67,6 @@ RETURNS TABLE (
     id BIGINT,
     source TEXT,
     content TEXT,
-    metadata JSONB,
     score FLOAT
 )
 LANGUAGE sql STABLE
@@ -82,7 +75,6 @@ AS $$
         id,
         source,
         content,
-        metadata,
         ts_rank_cd(fts, websearch_to_tsquery('english', query_text))::FLOAT AS score
     FROM chunks
     WHERE fts @@ websearch_to_tsquery('english', query_text)
@@ -93,7 +85,7 @@ $$;
 -- Hybrid search using Reciprocal Rank Fusion (RRF)
 CREATE OR REPLACE FUNCTION hybrid_search(
     query_text TEXT,
-    query_embedding vector(768),
+    query_embedding vector(1536),
     match_count INT DEFAULT 5,
     rrf_k INT DEFAULT 60
 )
@@ -101,7 +93,6 @@ RETURNS TABLE (
     id BIGINT,
     source TEXT,
     content TEXT,
-    metadata JSONB,
     score FLOAT
 )
 LANGUAGE sql STABLE
@@ -124,7 +115,6 @@ AS $$
         c.id,
         c.source,
         c.content,
-        c.metadata,
         (
             COALESCE(1.0 / (rrf_k + v.rank), 0.0) +
             COALESCE(1.0 / (rrf_k + k.rank), 0.0)

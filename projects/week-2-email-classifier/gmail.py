@@ -12,8 +12,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
-# Gmail API scopes - readonly for safety
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+# Gmail API scopes - need modify to add labels
+SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
 
 
 def get_gmail_service():
@@ -49,22 +49,28 @@ def get_gmail_service():
     return build("gmail", "v1", credentials=creds)
 
 
-def fetch_emails(service, max_results: int = 10) -> list[dict]:
+def fetch_emails(service, max_results: int = 10, unread_only: bool = True) -> list[dict]:
     """
     Fetch recent emails from the inbox.
 
     Args:
         service: Gmail API service object
         max_results: Maximum number of emails to fetch
+        unread_only: Only fetch unread emails (for incremental processing)
 
     Returns:
         List of email dictionaries with id, subject, sender, snippet, body
     """
+    # Only fetch unread emails to avoid reprocessing
+    label_ids = ["INBOX"]
+    if unread_only:
+        label_ids.append("UNREAD")
+
     # Get list of messages
     results = (
         service.users()
         .messages()
-        .list(userId="me", labelIds=["INBOX"], maxResults=max_results)
+        .list(userId="me", labelIds=label_ids, maxResults=max_results)
         .execute()
     )
 
@@ -113,6 +119,59 @@ def extract_body(payload: dict) -> str:
                     break
 
     return body
+
+
+# =============================================================================
+# Labels
+# =============================================================================
+
+
+def get_or_create_label(service, label_name: str) -> str:
+    """
+    Get a label by name, or create it if it doesn't exist.
+
+    Returns the label ID.
+    """
+    # Check if label already exists
+    results = service.users().labels().list(userId="me").execute()
+    labels = results.get("labels", [])
+
+    for label in labels:
+        if label["name"] == label_name:
+            return label["id"]
+
+    # Create the label
+    label_body = {
+        "name": label_name,
+        "labelListVisibility": "labelShow",
+        "messageListVisibility": "show",
+    }
+    created = service.users().labels().create(userId="me", body=label_body).execute()
+    print(f"Created label: {label_name}")
+    return created["id"]
+
+
+def apply_label(service, message_id: str, label_id: str):
+    """Apply a label to an email message."""
+    service.users().messages().modify(
+        userId="me",
+        id=message_id,
+        body={"addLabelIds": [label_id]},
+    ).execute()
+
+
+def mark_as_read(service, message_id: str):
+    """Mark an email as read by removing the UNREAD label."""
+    service.users().messages().modify(
+        userId="me",
+        id=message_id,
+        body={"removeLabelIds": ["UNREAD"]},
+    ).execute()
+
+
+def get_or_create_needs_response_label(service) -> str:
+    """Create the 'Needs Response' label if it doesn't exist."""
+    return get_or_create_label(service, "Needs Response")
 
 
 # =============================================================================

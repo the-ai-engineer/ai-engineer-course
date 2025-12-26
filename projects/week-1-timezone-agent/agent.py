@@ -107,7 +107,9 @@ class TimezoneAgent:
             for call in tool_calls:
                 func = TOOL_MAP.get(call.name)
                 args = json.loads(call.arguments) if call.arguments else {}
+                print(f"  -> Calling {call.name}({args})")
                 result = func(**args) if func else f"Unknown tool: {call.name}"
+                print(f"  <- {result}")
                 tool_results.append({
                     "type": "function_call_output",
                     "call_id": call.call_id,

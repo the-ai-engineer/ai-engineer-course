@@ -1,23 +1,22 @@
 """Document ingestion script.
 
-Standalone script for parsing documents, chunking text,
-generating embeddings, and storing in PostgreSQL.
+Parses documents, chunks text, generates embeddings, and stores in PostgreSQL.
 
 Usage:
     python ingest.py docs/              # Ingest all documents in a directory
     python ingest.py docs/policy.pdf    # Ingest a single file
 """
 
-import os
 import sys
 from pathlib import Path
 
 import tiktoken
-import psycopg
-from dotenv import load_dotenv
 from docling.document_converter import DocumentConverter
+from dotenv import load_dotenv
 from openai import OpenAI
-from pgvector.psycopg import register_vector
+
+from app.config import get_settings
+from app.db import get_connection
 
 load_dotenv()
 
@@ -25,33 +24,18 @@ load_dotenv()
 # Configuration
 # =============================================================================
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost/ragdb")
-EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1536
+settings = get_settings()
+client = OpenAI()
+converter = DocumentConverter()
+tokenizer = tiktoken.get_encoding("cl100k_base")
 
-# Token-based chunking limits
 MIN_CHUNK_TOKENS = 100
 MAX_CHUNK_TOKENS = 500
-
-# =============================================================================
-# Clients
-# =============================================================================
-
-converter = DocumentConverter()
-client = OpenAI()
-tokenizer = tiktoken.get_encoding("cl100k_base")
 
 
 # =============================================================================
 # Pipeline Functions
 # =============================================================================
-
-
-def get_connection():
-    """Get a database connection with vector support."""
-    conn = psycopg.connect(DATABASE_URL)
-    register_vector(conn)
-    return conn
 
 
 def parse_document(source: str) -> str:
@@ -66,11 +50,7 @@ def count_tokens(text: str) -> int:
 
 
 def chunk_text(text: str) -> list[str]:
-    """Split text into chunks respecting token limits.
-
-    Uses tiktoken for accurate token counting.
-    Target: 300-500 tokens per chunk for optimal retrieval quality.
-    """
+    """Split text into chunks respecting token limits."""
     paragraphs = text.split("\n\n")
     chunks = []
     current_chunk = ""
@@ -83,7 +63,6 @@ def chunk_text(text: str) -> list[str]:
 
         para_tokens = count_tokens(para)
 
-        # If adding this paragraph exceeds token limit, finalize current chunk
         if current_chunk and (current_tokens + para_tokens) > MAX_CHUNK_TOKENS:
             chunks.append(current_chunk.strip())
             current_chunk = para
@@ -92,11 +71,9 @@ def chunk_text(text: str) -> list[str]:
             current_chunk = f"{current_chunk}\n\n{para}" if current_chunk else para
             current_tokens += para_tokens
 
-    # Handle final chunk - merge with previous if too small
     if current_chunk:
         current_chunk = current_chunk.strip()
         if current_tokens < MIN_CHUNK_TOKENS and chunks:
-            # Merge small final chunk to avoid losing trailing content
             chunks[-1] = f"{chunks[-1]}\n\n{current_chunk}"
         else:
             chunks.append(current_chunk)
@@ -108,37 +85,32 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
     """Generate embeddings for a list of texts."""
     if not texts:
         return []
-
     response = client.embeddings.create(
-        model=EMBEDDING_MODEL,
+        model=settings.embedding_model,
         input=texts,
     )
     return [item.embedding for item in response.data]
 
 
-def ingest_document(conn: psycopg.Connection, source: str) -> int:
+def ingest_document(conn, source: str) -> int:
     """Ingest a single document. Returns number of chunks created."""
     path = Path(source)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {source}")
 
-    # Parse document to markdown
     text = parse_document(source)
     if not text.strip():
         return 0
 
-    # Split into chunks
     chunks = chunk_text(text)
     if not chunks:
         return 0
 
-    # Generate embeddings
     embeddings = embed_texts(chunks)
 
     # Delete existing chunks from this source (for re-ingestion)
     conn.execute("DELETE FROM chunks WHERE source = %s", (source,))
 
-    # Insert chunks
     for content, embedding in zip(chunks, embeddings):
         conn.execute(
             "INSERT INTO chunks (source, content, embedding) VALUES (%s, %s, %s)",
@@ -149,7 +121,7 @@ def ingest_document(conn: psycopg.Connection, source: str) -> int:
     return len(chunks)
 
 
-def ingest_directory(conn: psycopg.Connection, directory: str) -> dict:
+def ingest_directory(conn, directory: str) -> dict:
     """Ingest all documents in a directory."""
     extensions = [".pdf", ".md", ".txt", ".docx"]
     path = Path(directory)
@@ -190,21 +162,19 @@ def main():
     path = Path(target)
 
     print("Connecting to database...")
-    conn = get_connection()
+    with get_connection() as conn:
+        if path.is_file():
+            print(f"Ingesting file: {target}")
+            chunks = ingest_document(conn, target)
+            print(f"Created {chunks} chunks")
+        elif path.is_dir():
+            print(f"Ingesting directory: {target}")
+            stats = ingest_directory(conn, target)
+            print(f"\nDone: {stats['success']}/{stats['total']} files, {stats['chunks']} chunks")
+        else:
+            print(f"Error: {target} not found")
+            sys.exit(1)
 
-    if path.is_file():
-        print(f"Ingesting file: {target}")
-        chunks = ingest_document(conn, target)
-        print(f"Created {chunks} chunks")
-    elif path.is_dir():
-        print(f"Ingesting directory: {target}")
-        stats = ingest_directory(conn, target)
-        print(f"\nDone: {stats['success']}/{stats['total']} files, {stats['chunks']} chunks")
-    else:
-        print(f"Error: {target} not found")
-        sys.exit(1)
-
-    conn.close()
     print("Complete.")
 
 
