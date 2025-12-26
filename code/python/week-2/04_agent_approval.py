@@ -32,17 +32,15 @@ def write_file(path: str, content: str) -> str:
 TOOLS = [
     {
         "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "Write content to a file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Path to the file"},
-                    "content": {"type": "string", "description": "Content to write"},
-                },
-                "required": ["path", "content"],
+        "name": "write_file",
+        "description": "Write content to a file",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Path to the file"},
+                "content": {"type": "string", "description": "Content to write"},
             },
+            "required": ["path", "content"],
         },
     },
 ]

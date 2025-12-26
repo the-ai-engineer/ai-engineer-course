@@ -56,36 +56,32 @@ def calculate(expression: str) -> str:
 tools = [
     {
         "type": "function",
-        "function": {
-            "name": "get_current_time",
-            "description": "Get the current time in a specific timezone",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "timezone": {
-                        "type": "string",
-                        "description": "IANA timezone name (e.g., 'America/New_York', 'Europe/London')",
-                    }
-                },
-                "required": ["timezone"],
+        "name": "get_current_time",
+        "description": "Get the current time in a specific timezone",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "description": "IANA timezone name (e.g., 'America/New_York', 'Europe/London')",
+                }
             },
+            "required": ["timezone"],
         },
     },
     {
         "type": "function",
-        "function": {
-            "name": "calculate",
-            "description": "Evaluate a mathematical expression",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "expression": {
-                        "type": "string",
-                        "description": "Math expression (e.g., '2 + 2', '10 * 5')",
-                    }
-                },
-                "required": ["expression"],
+        "name": "calculate",
+        "description": "Evaluate a mathematical expression",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "type": "string",
+                    "description": "Math expression (e.g., '2 + 2', '10 * 5')",
+                }
             },
+            "required": ["expression"],
         },
     },
 ]

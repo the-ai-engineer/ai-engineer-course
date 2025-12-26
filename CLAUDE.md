@@ -143,16 +143,14 @@ response = client.responses.create(
     input="What's the weather in Tokyo?",
     tools=[{
         "type": "function",
-        "function": {
-            "name": "get_weather",
-            "description": "Get current weather for a location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {"type": "string", "description": "City name"}
-                },
-                "required": ["location"],
+        "name": "get_weather",
+        "description": "Get current weather for a location",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "location": {"type": "string", "description": "City name"}
             },
+            "required": ["location"],
         },
     }],
 )

@@ -49,24 +49,20 @@ def read_file(path: str) -> str:
 TOOLS = [
     {
         "type": "function",
-        "function": {
-            "name": "get_current_datetime",
-            "description": "Get the current date, time, and timezone",
-            "parameters": {"type": "object", "properties": {}, "required": []},
-        },
+        "name": "get_current_datetime",
+        "description": "Get the current date, time, and timezone",
+        "parameters": {"type": "object", "properties": {}, "required": []},
     },
     {
         "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read the contents of a local file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string", "description": "Path to the file"}
-                },
-                "required": ["path"],
+        "name": "read_file",
+        "description": "Read the contents of a local file",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Path to the file"}
             },
+            "required": ["path"],
         },
     },
 ]
