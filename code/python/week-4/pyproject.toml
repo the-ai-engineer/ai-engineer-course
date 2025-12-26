@@ -1,0 +1,16 @@
+[project]
+name = "week-4-pydantic-ai"
+version = "0.1.0"
+description = "PydanticAI agents, tools, and structured responses"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0.0",
+    "pydantic-ai>=0.0.20",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ipykernel>=6.0.0",
+]

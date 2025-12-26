@@ -15,7 +15,7 @@ load_dotenv()
 
 
 # =============================================================================
-# Basic Result Types
+# Basic Result Type
 # =============================================================================
 
 
@@ -31,8 +31,8 @@ simple_agent = Agent(
     result_type=SimpleAnswer,
 )
 
-# Run with: simple_agent.run_sync("What is the capital of Japan?")
-# Access: result.output.response, result.output.confidence
+# simple_agent.run_sync("What is the capital of Japan?")
+# result.output.response, result.output.confidence
 
 
 # =============================================================================
@@ -53,19 +53,16 @@ class AnswerWithSources(BaseModel):
 
     answer: str = Field(description="The answer to the question")
     sources: list[Source] = Field(description="Sources supporting the answer")
-    needs_clarification: bool = Field(
-        default=False, description="Whether the question needs clarification"
-    )
+    needs_clarification: bool = Field(default=False)
 
 
 sourced_agent = Agent(
     "openai:gpt-4o-mini",
-    system_prompt="Answer questions and cite your sources. Make up plausible sources for this demo.",
+    system_prompt="Answer questions and cite your sources.",
     result_type=AnswerWithSources,
 )
 
-# Run with: sourced_agent.run_sync("What is the vacation policy?")
-# Access: result.output.answer, result.output.sources
+# sourced_agent.run_sync("What is the vacation policy?")
 
 
 # =============================================================================
@@ -74,8 +71,6 @@ sourced_agent = Agent(
 
 
 class Priority(str, Enum):
-    """Task priority levels."""
-
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -83,8 +78,6 @@ class Priority(str, Enum):
 
 
 class Category(str, Enum):
-    """Support ticket categories."""
-
     BILLING = "billing"
     TECHNICAL = "technical"
     ACCOUNT = "account"
@@ -95,46 +88,22 @@ class SupportTicket(BaseModel):
     """A classified support ticket."""
 
     title: str = Field(description="Brief title for the ticket")
-    category: Category = Field(description="The ticket category")
-    priority: Priority = Field(description="How urgent is this issue")
-    summary: str = Field(description="One sentence summary of the issue")
+    category: Category
+    priority: Priority
+    summary: str = Field(description="One sentence summary")
 
 
 ticket_agent = Agent(
     "openai:gpt-4o-mini",
-    system_prompt="Classify support tickets. Determine the category and priority based on the content.",
+    system_prompt="Classify support tickets by category and priority.",
     result_type=SupportTicket,
 )
 
-# Run with: ticket_agent.run_sync("I can't log into my account and I have a presentation in 1 hour!")
-# Access: result.output.priority == Priority.URGENT
+# ticket_agent.run_sync("I can't log into my account and I have a presentation in 1 hour!")
 
 
 # =============================================================================
-# Validation with Constraints
-# =============================================================================
-
-
-class Rating(BaseModel):
-    """A validated rating."""
-
-    score: int = Field(ge=1, le=5, description="Rating from 1 to 5 stars")
-    explanation: str = Field(min_length=10, description="Why this rating was given")
-
-
-rating_agent = Agent(
-    "openai:gpt-4o-mini",
-    system_prompt="Rate the sentiment of the given text on a 1-5 scale.",
-    result_type=Rating,
-    retries=3,  # Retry if validation fails
-)
-
-# Run with: rating_agent.run_sync("This product is amazing! Best purchase ever!")
-# The agent will retry if it returns a score outside 1-5
-
-
-# =============================================================================
-# Complex Analysis
+# Complex Analysis with Optional Fields
 # =============================================================================
 
 
@@ -142,13 +111,10 @@ class Entity(BaseModel):
     """An extracted entity."""
 
     name: str
-    entity_type: str = Field(description="Type: person, organization, location, etc.")
-    context: str = Field(description="How this entity relates to the text")
+    entity_type: str = Field(description="person, organization, location, etc.")
 
 
 class Sentiment(str, Enum):
-    """Sentiment classification."""
-
     POSITIVE = "positive"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
@@ -162,7 +128,7 @@ class TextAnalysis(BaseModel):
     sentiment: Sentiment
     entities: list[Entity] = Field(default_factory=list)
     keywords: list[str] = Field(description="Key topics mentioned")
-    language: str = Field(default="english", description="Detected language")
+    language: str = Field(default="english")
 
 
 analysis_agent = Agent(
@@ -171,68 +137,5 @@ analysis_agent = Agent(
     result_type=TextAnalysis,
 )
 
-# Run with:
-# text = "Apple announced new products at their Cupertino headquarters. CEO Tim Cook presented the iPhone 16."
+# text = "Apple announced new products at their Cupertino headquarters."
 # analysis_agent.run_sync(text)
-
-
-# =============================================================================
-# Optional and Default Fields
-# =============================================================================
-
-
-class FlexibleResponse(BaseModel):
-    """A response with optional fields."""
-
-    answer: str
-    confidence: Optional[float] = None  # Only if the model can estimate
-    follow_up_questions: list[str] = Field(
-        default_factory=list, description="Suggested follow-up questions"
-    )
-    caveats: Optional[str] = Field(
-        default=None, description="Any caveats or limitations to the answer"
-    )
-
-
-flexible_agent = Agent(
-    "openai:gpt-4o-mini",
-    system_prompt="Answer questions. Include confidence if you can estimate it, and suggest follow-ups.",
-    result_type=FlexibleResponse,
-)
-
-# Run with: flexible_agent.run_sync("What causes rain?")
-
-
-# =============================================================================
-# Extraction Tasks
-# =============================================================================
-
-
-class ContactInfo(BaseModel):
-    """Extracted contact information."""
-
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    company: Optional[str] = None
-
-
-class MeetingDetails(BaseModel):
-    """Extracted meeting information."""
-
-    participants: list[str] = Field(default_factory=list)
-    date: Optional[str] = None
-    time: Optional[str] = None
-    location: Optional[str] = None
-    agenda: Optional[str] = None
-
-
-extraction_agent = Agent(
-    "openai:gpt-4o-mini",
-    system_prompt="Extract meeting details from the given text. Use null for missing information.",
-    result_type=MeetingDetails,
-)
-
-# Run with:
-# text = "Let's meet tomorrow at 3pm in the conference room. I'll bring John and Sarah."
-# extraction_agent.run_sync(text)

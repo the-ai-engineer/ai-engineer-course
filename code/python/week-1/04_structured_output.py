@@ -31,15 +31,13 @@ email_text = "Hi! I'm John Smith from Acme Corp. Reach me at john@acme.com or 55
 
 response = client.responses.parse(
     model="gpt-5-mini",
-    input=[
-        {"role": "system", "content": "Extract contact information from the text."},
-        {"role": "user", "content": email_text},
-    ],
+    instructions="Extract contact information from the text.",
+    input=email_text,
     text_format=ContactInfo,
 )
 
 contact = response.output_parsed
-print(contact)
+# contact.name, contact.email, contact.phone, contact.company
 
 # =============================================================================
 # Enums for Constrained Values
@@ -60,15 +58,13 @@ class Task(BaseModel):
 
 response = client.responses.parse(
     model="gpt-5-mini",
-    input=[
-        {"role": "system", "content": "Create a task from the user's request."},
-        {"role": "user", "content": "Fix the login bug that's blocking users"},
-    ],
+    instructions="Create a task from the user's request.",
+    input="Fix the login bug that's blocking users",
     text_format=Task,
 )
 
 task = response.output_parsed
-print(task)
+# task.title, task.priority
 
 # =============================================================================
 # Nested Objects
@@ -91,15 +87,13 @@ text = "John Doe is a 32-year-old developer in San Francisco, USA. He knows Pyth
 
 response = client.responses.parse(
     model="gpt-5-mini",
-    input=[
-        {"role": "system", "content": "Extract person information from the text."},
-        {"role": "user", "content": text},
-    ],
+    instructions="Extract person information from the text.",
+    input=text,
     text_format=Person,
 )
 
 person = response.output_parsed
-print(person)
+# person.name, person.age, person.address.city, person.skills
 
 # =============================================================================
 # List of Objects
@@ -117,12 +111,10 @@ class ProductList(BaseModel):
 
 response = client.responses.parse(
     model="gpt-5-mini",
-    input=[
-        {"role": "system", "content": "Generate products for a tech store."},
-        {"role": "user", "content": "Generate 3 products"},
-    ],
+    instructions="Generate products for a tech store.",
+    input="Generate 3 products",
     text_format=ProductList,
 )
 
 catalog = response.output_parsed
-print(catalog.products)
+# catalog.products

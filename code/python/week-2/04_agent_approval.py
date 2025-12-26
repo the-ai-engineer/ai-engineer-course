@@ -1,7 +1,8 @@
 """
 Human-in-the-Loop Agent
 
-An agent that requires human approval before executing dangerous tools.
+An agent that requires human approval before executing tools.
+Use this pattern for dangerous operations like file writes, API calls, or database changes.
 """
 
 import json
@@ -14,152 +15,100 @@ client = OpenAI()
 
 
 # =============================================================================
-# Dangerous Tool: Bash Commands
+# Tool that requires approval
 # =============================================================================
 
 
-def run_bash(command: str) -> str:
-    """Run a bash command and return the output.
-
-    Args:
-        command: The bash command to execute
-    """
-    import subprocess
-
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    if result.returncode != 0:
-        return f"Error: {result.stderr}"
-    return result.stdout or "Command completed successfully"
+def write_file(path: str, content: str) -> str:
+    """Write content to a file."""
+    try:
+        with open(path, "w") as f:
+            f.write(content)
+        return f"Successfully wrote to {path}"
+    except Exception as e:
+        return f"Error writing file: {e}"
 
 
 TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "run_bash",
-            "description": "Run a bash command and return the output",
+            "name": "write_file",
+            "description": "Write content to a file",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "command": {
-                        "type": "string",
-                        "description": "The bash command to execute",
-                    }
+                    "path": {"type": "string", "description": "Path to the file"},
+                    "content": {"type": "string", "description": "Content to write"},
                 },
-                "required": ["command"],
+                "required": ["path", "content"],
             },
         },
     },
 ]
 
-TOOL_MAP = {"run_bash": run_bash}
+TOOL_MAP = {"write_file": write_file}
 
 
 # =============================================================================
-# Agent with Human Approval
+# Approval Function
 # =============================================================================
 
 
-class AgentWithApproval:
-    """
-    An agent that requires human approval before executing tools.
+def get_approval(tool_name: str, args: dict) -> bool:
+    """Ask user for approval before running a tool."""
+    print(f"\nTool: {tool_name}")
+    print(f"Args: {args}")
+    response = input("Approve? [y/n]: ").strip().lower()
+    return response == "y"
 
-    Use this pattern for dangerous operations like:
-    - Running shell commands
-    - Sending emails
-    - Making purchases
-    - Modifying databases
-    """
 
-    def __init__(
-        self,
-        tools: list = None,
-        tool_map: dict = None,
-        model: str = "gpt-5-mini",
-        system_prompt: str = None,
-    ):
-        self.tools = tools or []
-        self.tool_map = tool_map or {}
-        self.model = model
-        self.system_prompt = system_prompt or self._default_prompt()
+# =============================================================================
+# Agent with Approval
+# =============================================================================
 
-    def _default_prompt(self) -> str:
-        return """You are a helpful assistant that can run bash commands.
 
-Only use the run_bash tool when the user asks you to perform system operations.
-Be careful with destructive commands."""
+def run_with_approval(goal: str, max_iterations: int = 5) -> str:
+    """Run an agent loop that requires approval for each tool call."""
+    response = client.responses.create(
+        model="gpt-5-mini",
+        input=goal,
+        instructions="You can write files when asked. Be helpful.",
+        tools=TOOLS,
+    )
 
-    def _get_approval(self, tool_name: str, args: dict) -> bool:
-        """Ask user for approval before running a tool."""
-        print(f"\nTool: {tool_name}")
-        print(f"Args: {args}")
-        response = input("Approve? [y/n]: ").strip().lower()
-        return response == "y"
+    for _ in range(max_iterations):
+        tool_calls = [item for item in response.output if item.type == "function_call"]
 
-    def run(self, goal: str, max_iterations: int = 5) -> str:
-        """Run agent with human approval for each tool call."""
-        print(f"Goal: {goal}\n")
+        if not tool_calls:
+            return response.output_text
+
+        tool_results = []
+        for call in tool_calls:
+            func = TOOL_MAP.get(call.name)
+            args = json.loads(call.arguments) if call.arguments else {}
+
+            # Ask for approval before executing
+            if get_approval(call.name, args):
+                result = func(**args) if func else f"Unknown tool: {call.name}"
+            else:
+                result = "Tool execution denied by user"
+
+            tool_results.append({
+                "type": "function_call_output",
+                "call_id": call.call_id,
+                "output": str(result),
+            })
 
         response = client.responses.create(
-            model=self.model,
-            input=goal,
-            instructions=self.system_prompt,
-            tools=self.tools,
+            model="gpt-5-mini",
+            input=tool_results,
+            previous_response_id=response.id,
+            tools=TOOLS,
         )
 
-        for i in range(max_iterations):
-            print(f"--- Step {i + 1} ---")
-
-            # Check for tool calls
-            tool_calls = [item for item in response.output if item.type == "function_call"]
-
-            if not tool_calls:
-                print(f"Answer: {response.output_text}\n")
-                return response.output_text
-
-            # Execute tools WITH APPROVAL
-            tool_results = []
-            for call in tool_calls:
-                func = self.tool_map.get(call.name)
-
-                if func:
-                    args = json.loads(call.arguments) if call.arguments else {}
-
-                    # Ask for approval
-                    if self._get_approval(call.name, args):
-                        result = func(**args)
-                        print(f"Result: {result[:200]}..." if len(str(result)) > 200 else f"Result: {result}")
-                    else:
-                        result = "Tool execution denied by user"
-                        print("Denied")
-                else:
-                    result = f"Unknown tool: {call.name}"
-
-                tool_results.append({
-                    "type": "function_call_output",
-                    "call_id": call.call_id,
-                    "output": str(result),
-                })
-
-            # Continue with tool results
-            response = client.responses.create(
-                model=self.model,
-                input=tool_results,
-                previous_response_id=response.id,
-                tools=self.tools,
-            )
-
-        return "Max iterations reached"
+    return "Max iterations reached"
 
 
-# =============================================================================
-# Example Usage
-# =============================================================================
-
-if __name__ == "__main__":
-    agent = AgentWithApproval(tools=TOOLS, tool_map=TOOL_MAP)
-
-    # Uncomment to run examples:
-    # agent.run("List the files in the current directory")
-    # agent.run("What processes are running on this machine?")
-    # agent.run("How much disk space is available?")
+# Usage:
+# run_with_approval("Create a file called hello.txt with the content 'Hello, World!'")
