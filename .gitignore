@@ -30,6 +30,7 @@ uv.lock
 *.db
 *.sqlite
 chroma-database/
+.chainlit/
 
 # Lesson content (private - for Skool only)
 /lessons/
