@@ -17,7 +17,7 @@ load_dotenv()
 client = OpenAI()
 
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost/ragdb"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost/vectordb"
 )
 
 EMBEDDING_DIMENSIONS = 1536
@@ -44,7 +44,7 @@ def add_fulltext_column(conn):
     """
     Add tsvector column for full-text search.
 
-    Run this once after creating the base schema from 03_vector_search.py.
+    Run this once after creating the base schema from 04_vector_search.py.
     """
     conn.execute("""
         ALTER TABLE chunks ADD COLUMN IF NOT EXISTS content_tsv tsvector

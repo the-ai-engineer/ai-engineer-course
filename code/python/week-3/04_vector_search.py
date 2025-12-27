@@ -25,7 +25,7 @@ client = OpenAI()
 # =============================================================================
 
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost/ragdb"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost/vectordb"
 )
 
 # OpenAI text-embedding-3-small produces 1536 dimensions by default

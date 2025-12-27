@@ -3,12 +3,17 @@
 Parses documents, chunks text, generates embeddings, and stores in PostgreSQL.
 
 Usage:
-    python ingest.py ./docs              # Ingest all documents in a directory
+    python ingest.py                     # Download and ingest Nike 2025 Annual Report
+    python ingest.py ./path/to/docs      # Ingest all documents in a directory
     python ingest.py ./docs/policy.pdf   # Ingest a single file
 """
 
 import sys
+import urllib.request
 from pathlib import Path
+
+SAMPLE_PDF_URL = "https://s1.q4cdn.com/806093406/files/doc_financials/2025/ar/Nike-Inc-2025_10K.pdf"
+SAMPLE_PDF_NAME = "nike_2025_annual_report.pdf"
 
 import tiktoken
 from docling.document_converter import DocumentConverter
@@ -184,12 +189,22 @@ def ingest_directory(directory: str) -> dict:
 # =============================================================================
 
 
+def download_sample_pdf() -> str:
+    """Download Nike 2025 Annual Report if not already present."""
+    if not Path(SAMPLE_PDF_NAME).exists():
+        print(f"Downloading {SAMPLE_PDF_NAME}...")
+        urllib.request.urlretrieve(SAMPLE_PDF_URL, SAMPLE_PDF_NAME)
+        print("Download complete.")
+    return SAMPLE_PDF_NAME
+
+
 def main():
     if len(sys.argv) < 2:
-        print(__doc__)
-        sys.exit(1)
+        # No args - download and use sample PDF
+        target = download_sample_pdf()
+    else:
+        target = sys.argv[1]
 
-    target = sys.argv[1]
     path = Path(target)
 
     if path.is_file():

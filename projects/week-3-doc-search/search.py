@@ -3,10 +3,11 @@
 Supports vector search (semantic), keyword search, and hybrid search (RRF).
 
 Usage:
-    python search.py "your question here"
-    python search.py --hybrid "error code XYZ-123"
-    python search.py --keyword "vacation policy"
-    python search.py --limit 10 "remote work"
+    python search.py "your question here"              # Vector search (retrieval only)
+    python search.py --ask "your question here"        # RAG: retrieve + generate answer
+    python search.py --hybrid --ask "question"         # Hybrid search + answer
+    python search.py --keyword "exact term"            # Keyword search only
+    python search.py --limit 10 "query"                # Limit results
 """
 
 import argparse
@@ -102,11 +103,43 @@ def hybrid_search(query: str, limit: int = 5) -> list[dict]:
 # =============================================================================
 
 
-def display_results(query: str, results: list[dict], search_type: str):
+RAG_INSTRUCTIONS = """Answer the question using ONLY the provided context.
+
+Rules:
+- If the answer is not in the context, say "I don't have information about that in the provided documents."
+- Quote relevant passages to support your answer
+- Cite the source document for each claim
+- Do not use any knowledge from your training data"""
+
+
+def generate_answer(query: str, results: list[dict]) -> str:
+    """Generate an answer using retrieved context (RAG)."""
+    if not results:
+        return "No relevant information found in the documents."
+
+    context = "\n\n---\n\n".join(
+        f"[Source: {Path(r['source']).name}]\n{r['content']}" for r in results
+    )
+
+    response = client.responses.create(
+        model="gpt-4.1-mini",
+        instructions=RAG_INSTRUCTIONS,
+        input=f"Context:\n{context}\n\nQuestion: {query}",
+    )
+
+    return response.output_text
+
+
+def display_results(query: str, results: list[dict], search_type: str, answer: str = None):
     """Display search results in a readable format."""
     print(f"\nQuery: {query}")
     print(f"Search type: {search_type}")
     print("-" * 60)
+
+    if answer:
+        print(f"\nAnswer: {answer}\n")
+        print("-" * 60)
+        print("Sources:")
 
     if not results:
         print("No results found.")
@@ -134,6 +167,7 @@ def main():
     parser.add_argument("query", help="Search query")
     parser.add_argument("--hybrid", action="store_true", help="Use hybrid search (vector + keyword)")
     parser.add_argument("--keyword", action="store_true", help="Use keyword search only")
+    parser.add_argument("--ask", action="store_true", help="Generate answer using RAG")
     parser.add_argument("--limit", type=int, default=5, help="Number of results (default: 5)")
 
     args = parser.parse_args()
@@ -148,7 +182,8 @@ def main():
         results = vector_search(args.query, args.limit)
         search_type = "vector"
 
-    display_results(args.query, results, search_type)
+    answer = generate_answer(args.query, results) if args.ask else None
+    display_results(args.query, results, search_type, answer)
 
 
 if __name__ == "__main__":

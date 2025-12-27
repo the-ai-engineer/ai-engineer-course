@@ -2,168 +2,59 @@
 RAG Strategy 1: File Loading
 
 The simplest approach - load the entire file into the prompt.
-No embeddings, no database, no chunking.
+No embeddings, no database, no chunking. Works great for small documents.
 """
+
+from pathlib import Path
 
 from openai import OpenAI
 from dotenv import load_dotenv
-import json
 
 load_dotenv()
 
 client = OpenAI()
 
 
-# =============================================================================
-# Basic File Q&A
-# =============================================================================
+def load_file(file_path: str) -> str:
+    """Load a file's contents."""
+    return Path(file_path).read_text()
 
 
-def answer_from_file(question: str, file_path: str) -> str:
-    """Answer a question using a file as context."""
-    with open(file_path) as f:
-        content = f.read()
-
+def answer_question(question: str, context: str) -> str:
+    """Answer a question using the provided context."""
     response = client.responses.create(
         model="gpt-5-mini",
-        input=f"""Use the following document to answer the question.
-If the answer isn't in the document, say so.
+        instructions="""You are a friendly customer service assistant.
+Be concise and direct. Answer based on the FAQ document provided.""",
+        input=f"""FAQ Document:
+{context}
 
-Document:
-{content}
-
-Question: {question}""",
+Customer Question: {question}""",
     )
     return response.output_text
 
 
-def answer_from_files(question: str, file_paths: list[str]) -> str:
-    """Answer using multiple files as context."""
-    contents = []
-    for path in file_paths:
-        with open(path) as f:
-            contents.append(f"--- {path} ---\n{f.read()}")
+def run_demo():
+    """Demo: Answer questions from a FAQ file."""
+    print("=== File Loading RAG Demo ===\n")
 
-    combined = "\n\n".join(contents)
+    # Load the FAQ document
+    faq_content = load_file("faqs.md")
+    print(f"Loaded FAQ document ({len(faq_content)} characters)\n")
 
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=f"""Use these documents to answer the question.
-
-Documents:
-{combined}
-
-Question: {question}""",
-    )
-    return response.output_text
-
-
-# =============================================================================
-# FAQ Q&A
-# =============================================================================
-
-
-def answer_faq(question: str, faq_path: str) -> str:
-    """Answer questions from a FAQ JSON file."""
-    with open(faq_path) as f:
-        faqs = json.load(f)
-
-    # Format FAQs for the prompt
-    faq_text = "\n\n".join(
-        f"Q: {item['question']}\nA: {item['answer']}" for item in faqs["faqs"]
-    )
-
-    response = client.responses.create(
-        model="gpt-5-mini",
-        instructions="You are a helpful customer service assistant.",
-        input=f"""Answer the customer's question using ONLY the FAQ information below.
-If the question isn't covered, say you don't have that information.
-
-FAQ:
-{faq_text}
-
-Customer question: {question}""",
-    )
-    return response.output_text
-
-
-# =============================================================================
-# Reusable Q&A Agent
-# =============================================================================
-
-
-def create_file_qa_agent(file_path: str):
-    """Create a Q&A function for a specific file."""
-    with open(file_path) as f:
-        content = f.read()
-
-    def ask(question: str) -> str:
-        response = client.responses.create(
-            model="gpt-5-mini",
-            instructions=f"""You are a helpful assistant that answers questions
-about the following document. Only use information from this document.
-If something isn't covered, say so clearly.
-
-Document:
-{content}""",
-            input=question,
-        )
-        return response.output_text
-
-    return ask
-
-
-# =============================================================================
-# Example Usage
-# =============================================================================
-
-# Create sample FAQ file for demo
-sample_faqs = {
-    "faqs": [
-        {
-            "question": "What is your return policy?",
-            "answer": "You can return any item within 30 days of purchase for a full refund.",
-        },
-        {
-            "question": "How long does shipping take?",
-            "answer": "Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days.",
-        },
-        {
-            "question": "Do you ship internationally?",
-            "answer": "Yes, we ship to over 50 countries. International shipping takes 10-14 business days.",
-        },
-        {
-            "question": "What payment methods do you accept?",
-            "answer": "We accept Visa, Mastercard, American Express, PayPal, and Apple Pay.",
-        },
-        {
-            "question": "How do I track my order?",
-            "answer": "Once your order ships, you'll receive an email with a tracking number and link.",
-        },
+    # Sample questions
+    questions = [
+        "What is your return policy?",
+        "How much does express shipping cost?",
+        "Do you accept Bitcoin?",
+        "How do I contact support?",
     ]
-}
 
-# Write sample FAQ file
-with open("sample_faqs.json", "w") as f:
-    json.dump(sample_faqs, f, indent=2)
+    for question in questions:
+        print(f"Q: {question}")
+        answer = answer_question(question, faq_content)
+        print(f"A: {answer}\n")
 
-# Test FAQ Q&A
-print("Testing FAQ Q&A...")
-print("-" * 50)
 
-questions = [
-    "Can I get my money back if I don't like the product?",
-    "How fast is express shipping?",
-    "Do you accept Bitcoin?",
-]
-
-for q in questions:
-    print(f"Q: {q}")
-    answer = answer_faq(q, "sample_faqs.json")
-    print(f"A: {answer}")
-    print()
-
-# Clean up
-import os
-
-os.remove("sample_faqs.json")
+if __name__ == "__main__":
+    run_demo()

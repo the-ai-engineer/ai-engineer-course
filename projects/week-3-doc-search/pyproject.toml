@@ -10,4 +10,5 @@ dependencies = [
     "pgvector>=0.3.0",
     "docling>=2.0.0",
     "python-dotenv>=1.0.0",
+    "chainlit>=1.0.0",
 ]

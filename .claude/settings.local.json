@@ -17,7 +17,9 @@
       "Bash(mkdir:*)",
       "Bash(wc:*)",
       "Bash(xargs:*)",
-      "WebFetch(domain:langfuse.com)"
+      "WebFetch(domain:langfuse.com)",
+      "WebFetch(domain:gitlab.com)",
+      "WebFetch(domain:handbook.gitlab.com)"
     ],
     "deny": [],
     "ask": []

@@ -1,13 +1,14 @@
-# Week 3 Project: Document Search CLI
+# Week 3 Project: Document Search
 
-A command-line document search tool demonstrating RAG concepts with PostgreSQL and pgvector.
+A document search tool demonstrating RAG with PostgreSQL and pgvector.
 
 ## What You'll Learn
 
 - Document parsing with Docling
-- Token-based chunking for consistent embedding sizes
+- Token-based chunking for embeddings
 - Vector search with pgvector
-- Hybrid search combining vectors + keywords (RRF)
+- Hybrid search (vector + keyword with RRF)
+- RAG: retrieval + generation
 
 ## Quick Start
 
@@ -20,12 +21,14 @@ docker compose up -d
 cd ..
 uv sync
 
-# Ingest sample documents
-uv run python ingest.py ./docs
+# Ingest sample document (Nike 2025 Annual Report)
+uv run python ingest.py
 
-# Search!
-uv run python search.py "What is the vacation policy?"
-uv run python search.py --hybrid "error code XYZ-123"
+# Search via CLI
+uv run python search.py --ask "What was Nike's revenue in fiscal 2025?"
+
+# Or launch the chat UI
+uv run chainlit run app.py
 ```
 
 ## Project Structure
@@ -35,9 +38,10 @@ week-3-doc-search/
 ├── docker/
 │   ├── docker-compose.yml
 │   └── init.sql
+├── app.py         # Chainlit chat UI
 ├── db.py          # Database connection
 ├── ingest.py      # Document parsing, chunking, and storage
-├── search.py      # Vector, keyword, and hybrid search
+├── search.py      # Vector, keyword, and hybrid search (CLI)
 └── pyproject.toml
 ```
 
@@ -50,15 +54,61 @@ OPENAI_API_KEY=your-key-here
 DATABASE_URL=postgresql://postgres:postgres@localhost/week3_doc_search
 ```
 
-## Usage Examples
+## Sample Questions
+
+The default document is Nike's 2025 Annual Report (10-K filing). Try these questions:
+
+**Financial Performance**
+- "What was Nike's total revenue in fiscal 2025?"
+- "How much did Nike's revenue decline compared to last year?"
+- "What was Nike's gross margin in fiscal 2025?"
+- "What were Nike's earnings per share?"
+
+**Business Segments**
+- "How much revenue came from North America?"
+- "What is Nike's direct-to-consumer revenue?"
+- "How did the EMEA region perform?"
+- "What percentage of revenue comes from footwear vs apparel?"
+
+**Strategy & Operations**
+- "Who is Nike's CEO?"
+- "What are Nike's main risk factors?"
+- "How many employees does Nike have?"
+- "What is Nike's inventory strategy?"
+
+**Specific Numbers (good for verifying RAG accuracy)**
+- "What was Nike's Q4 revenue?" → $11.1 billion
+- "What was the full year revenue?" → $46.3 billion
+- "What was the revenue decline percentage?" → 10%
+
+## CLI Usage
 
 ```bash
-# Vector search (semantic similarity)
-uv run python search.py "How do I request time off?"
+# RAG: search + generate answer
+uv run python search.py --ask "What was Nike's gross margin?"
 
-# Hybrid search (semantic + keywords)
-uv run python search.py --hybrid "401k match percentage"
+# Hybrid search with answer
+uv run python search.py --hybrid --ask "What are Nike's risk factors?"
 
-# Specify number of results
-uv run python search.py --limit 10 "remote work policy"
+# Retrieval only (no answer generation)
+uv run python search.py "direct to consumer"
+
+# Keyword search (exact term matching)
+uv run python search.py --keyword "CONVERSE"
+
+# Ingest your own documents
+uv run python ingest.py /path/to/your/documents
 ```
+
+## Chat UI
+
+Launch the Chainlit interface:
+
+```bash
+uv run chainlit run app.py
+```
+
+Opens at http://localhost:8000 with:
+- Interactive chat interface
+- Hybrid search + RAG
+- Source citations for each answer
