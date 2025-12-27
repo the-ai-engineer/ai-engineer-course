@@ -13,19 +13,12 @@ A command-line document search tool demonstrating RAG concepts with PostgreSQL a
 
 ```bash
 # Start Postgres with pgvector
-docker run -d --name pgvector \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  pgvector/pgvector:pg16
-
-# Create database
-docker exec pgvector psql -U postgres -c "CREATE DATABASE ragdb"
+cd docker
+docker compose up -d
 
 # Install dependencies
+cd ..
 uv sync
-
-# Initialize schema
-uv run python db.py
 
 # Ingest sample documents
 uv run python ingest.py ./docs
@@ -39,10 +32,12 @@ uv run python search.py --hybrid "error code XYZ-123"
 
 ```
 week-3-doc-search/
-├── db.py          # Database connection and schema setup
+├── docker/
+│   ├── docker-compose.yml
+│   └── init.sql
+├── db.py          # Database connection
 ├── ingest.py      # Document parsing, chunking, and storage
 ├── search.py      # Vector, keyword, and hybrid search
-├── docs/          # Sample documents (copy from week-4-hr-agent)
 └── pyproject.toml
 ```
 
@@ -51,8 +46,8 @@ week-3-doc-search/
 Set environment variables in `.env`:
 
 ```
-GEMINI_API_KEY=your-key-here
-DATABASE_URL=postgresql://postgres:postgres@localhost/ragdb
+OPENAI_API_KEY=your-key-here
+DATABASE_URL=postgresql://postgres:postgres@localhost/week3_doc_search
 ```
 
 ## Usage Examples
@@ -67,11 +62,3 @@ uv run python search.py --hybrid "401k match percentage"
 # Specify number of results
 uv run python search.py --limit 10 "remote work policy"
 ```
-
-## Next Steps
-
-After completing this project, move to Week 4 where you'll build a production-ready RAG system with:
-- FastAPI web interface
-- PydanticAI agent with tools
-- Chat UI
-- Structured responses

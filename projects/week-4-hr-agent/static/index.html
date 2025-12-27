@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Policy Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>HR Policy Assistant</h1>
+    </header>
+
+    <main id="chat">
+        <div class="message assistant">
+            <div class="avatar">AI</div>
+            <div class="content">
+                <p>Welcome! I can help you find information about HR policies, benefits, vacation, and more. What would you like to know?</p>
+            </div>
+        </div>
+    </main>
+
+    <form id="form">
+        <input type="text" id="input" placeholder="Ask about HR policies..." autocomplete="off">
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        const chat = document.getElementById('chat');
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+
+        function addMessage(role, content, sources = []) {
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+
+            const renderedContent = role === 'assistant'
+                ? marked.parse(content)
+                : escapeHtml(content);
+
+            let sourcesHtml = '';
+            if (sources.length > 0) {
+                const names = [...new Set(sources.map(s => s.source.split('/').pop()))];
+                sourcesHtml = `<div class="sources">Sources: ${names.join(', ')}</div>`;
+            }
+
+            div.innerHTML = `
+                <div class="avatar">${role === 'user' ? 'You' : 'AI'}</div>
+                <div class="content">${renderedContent}${sourcesHtml}</div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addLoading() {
+            const div = document.createElement('div');
+            div.id = 'loading';
+            div.className = 'message assistant';
+            div.innerHTML = `
+                <div class="avatar">AI</div>
+                <div class="content">
+                    <div class="loading"><span></span><span></span><span></span></div>
+                </div>
+            `;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = input.value.trim();
+            if (!question) return;
+
+            addMessage('user', question);
+            input.value = '';
+            addLoading();
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+
+                const data = await response.json();
+                removeLoading();
+
+                if (response.ok) {
+                    addMessage('assistant', data.answer, data.sources);
+                } else {
+                    addMessage('assistant', 'Sorry, something went wrong. Please try again.');
+                }
+            } catch (error) {
+                removeLoading();
+                addMessage('assistant', 'Sorry, I could not connect to the server.');
+            }
+        });
+
+        input.focus();
+    </script>
+</body>
+</html>

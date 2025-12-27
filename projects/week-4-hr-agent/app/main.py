@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 
-from app.api import router
+from app.routes import router
 
 app = FastAPI(
     title="HR Policy Agent API",

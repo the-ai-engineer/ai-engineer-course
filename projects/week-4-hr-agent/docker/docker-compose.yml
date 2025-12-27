@@ -1,18 +1,18 @@
 services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    container_name: hr-agent-db
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: week4-hr-agent-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ragdb
+      POSTGRES_DB: week4_hr_agent
     ports:
       - "5432:5432"
     volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - pgdata:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ragdb"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5

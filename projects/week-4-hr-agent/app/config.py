@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    database_url: str = "postgresql://postgres:postgres@localhost/ragdb"
+    database_url: str = "postgresql://postgres:postgres@localhost/week4_hr_agent"
     openai_api_key: str | None = None
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536

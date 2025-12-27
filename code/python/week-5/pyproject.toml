@@ -1,14 +1,18 @@
 [project]
-name = "timezone-agent"
+name = "week-5-observability"
 version = "0.1.0"
-description = "Week 1 Project: Terminal-based timezone assistant"
+description = "Week 5: Observability and Evals"
 requires-python = ">=3.11"
 dependencies = [
     "openai>=1.0.0",
+    "langfuse>=2.0.0",
+    "pydantic-ai>=0.1.0",
     "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
 ]
 
 [tool.uv]
 dev-dependencies = [
+    "ipykernel>=7.1.0",
     "pytest>=8.0.0",
 ]

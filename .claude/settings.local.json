@@ -16,7 +16,8 @@
       "WebFetch(domain:www.trustpilot.com)",
       "Bash(mkdir:*)",
       "Bash(wc:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "WebFetch(domain:langfuse.com)"
     ],
     "deny": [],
     "ask": []

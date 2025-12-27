@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from app.config import get_settings
-from app.db import get_connection
+from app.database import get_connection
 
 load_dotenv()
 
