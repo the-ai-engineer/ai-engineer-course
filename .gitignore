@@ -34,5 +34,8 @@ chroma-database/
 # Lesson content (private - for Skool only)
 /lessons/
 
+# Course docs (private)
+/docs/
+
 # Archive (old module structure - not for public)
 archive/
