@@ -28,7 +28,6 @@ Rules:
 class AgentDeps:
     """Dependencies injected into the agent."""
 
-    search_limit: int = 5
     sources: list[dict] = field(default_factory=list)
 
 
@@ -50,7 +49,7 @@ def search_docs(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
     Returns:
         List of relevant documentation excerpts with source and relevance score.
     """
-    results = search(query, limit=ctx.deps.search_limit)
+    results = search(query, limit=5)
     ctx.deps.sources = results
 
     # Return simplified view to LLM
@@ -65,17 +64,16 @@ def search_docs(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
 
 
 @observe()
-async def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
+async def ask(question: str) -> tuple[str, list[dict]]:
     """Ask the support agent a question.
 
     Args:
         question: The question to ask.
-        search_limit: Number of search results to retrieve.
 
     Returns:
         Tuple of (answer, sources).
     """
-    deps = AgentDeps(search_limit=search_limit)
+    deps = AgentDeps()
     result = await support_agent.run(question, deps=deps)
 
     if langfuse:

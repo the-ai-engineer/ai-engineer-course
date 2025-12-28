@@ -7,7 +7,6 @@ class ChatRequest(BaseModel):
     """Chat request."""
 
     message: str
-    limit: int = 5
 
 
 class ChatResponse(BaseModel):
