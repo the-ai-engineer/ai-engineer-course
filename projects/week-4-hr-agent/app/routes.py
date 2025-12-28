@@ -34,9 +34,9 @@ def stats():
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest):
+async def chat(request: ChatRequest):
     """Chat with the support agent."""
-    answer, sources = ask(request.message, search_limit=request.limit)
+    answer, sources = await ask(request.message, search_limit=request.limit)
     return ChatResponse(
         message=request.message,
         response=answer,

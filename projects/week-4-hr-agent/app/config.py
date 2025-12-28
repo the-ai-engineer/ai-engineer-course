@@ -14,9 +14,19 @@ class Settings(BaseSettings):
     embedding_dimensions: int = 1536
     generation_model: str = "gpt-5-mini"
 
+    # Langfuse tracing settings
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: str | None = None
+    langfuse_host: str = "https://cloud.langfuse.com"
+
     class Config:
         env_file = ".env"
         extra = "ignore"
+
+    @property
+    def langfuse_enabled(self) -> bool:
+        """Check if Langfuse tracing is configured."""
+        return bool(self.langfuse_public_key and self.langfuse_secret_key)
 
 
 @lru_cache

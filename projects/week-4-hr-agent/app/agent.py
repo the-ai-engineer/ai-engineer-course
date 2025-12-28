@@ -2,32 +2,25 @@
 
 from dataclasses import dataclass, field
 
+from langfuse import get_client, observe
 from pydantic_ai import Agent, RunContext
 
 from app.config import get_settings
 from app.search import search
 
 settings = get_settings()
+langfuse = get_client() if settings.langfuse_enabled else None
 
-SYSTEM_PROMPT = """You are a Customer Support Agent for Zen HR, a SaaS HR management platform.
+SYSTEM_PROMPT = """You are a support agent for Zen HR. Be helpful, polite, and concise.
 
-Your role is to help customers find information about the product, billing,
-integrations, and troubleshooting. You have access to the support documentation
-through a search tool.
-
-Guidelines:
-- Always search the documentation before answering questions
-- Cite specific docs when providing information
-- If you cannot find relevant information, say so clearly
-- Be helpful and professional in your responses
-- Do not make up features or pricing that don't exist in the docs
-- For account-specific issues, recommend contacting support@zenhr.com
-
-When answering:
-1. Search for relevant documentation first
-2. Provide accurate information based on what you find
-3. Quote or reference specific documents when helpful
-4. Acknowledge limitations if information is incomplete
+Rules:
+- Search docs before answering
+- Give direct answers in 2-3 sentences
+- Only include details the customer actually needs
+- If info isn't in the docs, say so briefly and suggest support@zenhr.com
+- Never make up features or pricing
+- Don't offer to do things (draft emails, walk through steps, etc.) - just answer the question
+- For off-topic questions, just say "I can only help with Zen HR questions."
 """
 
 
@@ -43,6 +36,7 @@ support_agent = Agent(
     f"openai:{settings.generation_model}",
     system_prompt=SYSTEM_PROMPT,
     deps_type=AgentDeps,
+    instrument=True,
 )
 
 
@@ -70,7 +64,8 @@ def search_docs(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
     ]
 
 
-def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
+@observe()
+async def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
     """Ask the support agent a question.
 
     Args:
@@ -81,5 +76,9 @@ def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
         Tuple of (answer, sources).
     """
     deps = AgentDeps(search_limit=search_limit)
-    result = support_agent.run_sync(question, deps=deps)
+    result = await support_agent.run(question, deps=deps)
+
+    if langfuse:
+        langfuse.update_current_trace(input=question, output=result.output)
+
     return result.output, deps.sources
