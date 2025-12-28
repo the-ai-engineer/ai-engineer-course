@@ -1,6 +1,6 @@
-# Week 4 Project: HR Policy Agent
+# Week 4 Project: Zen HR Support Agent
 
-AI-powered HR policy assistant using PydanticAI with hybrid RAG search.
+AI-powered customer support assistant using PydanticAI with hybrid RAG search.
 
 ## What You'll Learn
 
@@ -20,7 +20,7 @@ docker compose up -d
 cd ..
 uv sync
 
-# Ingest sample documents
+# Ingest support documentation
 uv run python ingest.py ./docs
 
 # Start the server
@@ -46,7 +46,7 @@ week-4-hr-agent/
 │   └── routes.py      # API endpoints
 ├── templates/
 │   └── chat.html      # Chat UI
-├── docs/              # Sample HR documents
+├── docs/              # Zen HR support documentation
 ├── ingest.py          # Document ingestion
 └── pyproject.toml
 ```
@@ -63,10 +63,10 @@ DATABASE_URL=postgresql://postgres:postgres@localhost/week4_hr_agent
 ## API Endpoints
 
 ```bash
-# Chat with the HR agent
+# Chat with the support agent
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "How many vacation days do I get?"}'
+  -d '{"message": "What plans do you offer?"}'
 
 # Health check
 curl http://localhost:8000/health
@@ -77,8 +77,8 @@ curl http://localhost:8000/stats
 
 ## Sample Questions
 
-- "How many vacation days do I get?"
-- "What is the company 401k match?"
-- "Can I work from home?"
-- "How do I submit expense reports?"
-- "What is the parental leave policy?"
+- "What plans do you offer?"
+- "How do I integrate with Gusto?"
+- "What does error E401 mean?"
+- "Do you have an API?"
+- "How do I contact support?"

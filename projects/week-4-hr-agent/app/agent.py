@@ -1,4 +1,4 @@
-"""PydanticAI HR Policy Agent."""
+"""PydanticAI Customer Support Agent for Zen HR."""
 
 from dataclasses import dataclass, field
 
@@ -9,22 +9,22 @@ from app.search import search
 
 settings = get_settings()
 
-SYSTEM_PROMPT = """You are an HR Policy Assistant for Acme Corporation.
+SYSTEM_PROMPT = """You are a Customer Support Agent for Zen HR, a SaaS HR management platform.
 
-Your role is to help employees find information about company policies, benefits,
-and procedures. You have access to the company's HR policy documents through
-a search tool.
+Your role is to help customers find information about the product, billing,
+integrations, and troubleshooting. You have access to the support documentation
+through a search tool.
 
 Guidelines:
-- Always search the policy documents before answering questions
-- Cite specific policies when providing information
+- Always search the documentation before answering questions
+- Cite specific docs when providing information
 - If you cannot find relevant information, say so clearly
 - Be helpful and professional in your responses
-- Do not make up policies that don't exist in the documents
-- For complex HR issues, recommend speaking with the HR department directly
+- Do not make up features or pricing that don't exist in the docs
+- For account-specific issues, recommend contacting support@zenhr.com
 
 When answering:
-1. Search for relevant policies first
+1. Search for relevant documentation first
 2. Provide accurate information based on what you find
 3. Quote or reference specific documents when helpful
 4. Acknowledge limitations if information is incomplete
@@ -39,22 +39,22 @@ class AgentDeps:
     sources: list[dict] = field(default_factory=list)
 
 
-hr_agent = Agent(
+support_agent = Agent(
     f"openai:{settings.generation_model}",
     system_prompt=SYSTEM_PROMPT,
     deps_type=AgentDeps,
 )
 
 
-@hr_agent.tool
-def search_policies(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
-    """Search HR policy documents for relevant information.
+@support_agent.tool
+def search_docs(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
+    """Search support documentation for relevant information.
 
     Args:
-        query: The search query to find relevant policy information.
+        query: The search query to find relevant product information.
 
     Returns:
-        List of relevant policy excerpts with source and relevance score.
+        List of relevant documentation excerpts with source and relevance score.
     """
     results = search(query, limit=ctx.deps.search_limit)
     ctx.deps.sources = results
@@ -71,7 +71,7 @@ def search_policies(ctx: RunContext[AgentDeps], query: str) -> list[dict]:
 
 
 def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
-    """Ask the HR agent a question.
+    """Ask the support agent a question.
 
     Args:
         question: The question to ask.
@@ -81,5 +81,5 @@ def ask(question: str, search_limit: int = 5) -> tuple[str, list[dict]]:
         Tuple of (answer, sources).
     """
     deps = AgentDeps(search_limit=search_limit)
-    result = hr_agent.run_sync(question, deps=deps)
+    result = support_agent.run_sync(question, deps=deps)
     return result.output, deps.sources

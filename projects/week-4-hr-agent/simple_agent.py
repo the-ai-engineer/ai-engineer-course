@@ -14,7 +14,7 @@ When to use Vector RAG instead (see app/agent/):
 - Need fast responses on large corpora
 
 Usage:
-    python simple_agent.py "What is the vacation policy?"
+    python simple_agent.py "What plans do you offer?"
     python simple_agent.py  # Interactive mode
 """
 
@@ -65,23 +65,23 @@ def load_all_documents(docs_dir: Path) -> str:
 # System Prompt with Grounding Rules
 # =============================================================================
 
-SYSTEM_PROMPT_TEMPLATE = """You are an HR Policy Assistant for Acme Corporation.
+SYSTEM_PROMPT_TEMPLATE = """You are a Customer Support Agent for Zen HR, a SaaS HR management platform.
 
 ## Grounding Rules
 
 1. **Source Fidelity**: Answer ONLY using information from the documents below.
-   If the answer is not present, state: "I cannot find this information in the HR documents."
+   If the answer is not present, state: "I cannot find this information in our documentation. Please contact support@zenhr.com for assistance."
 
 2. **Citations**: Reference the source document when providing information.
    Format: (Source: filename.md)
 
 3. **No External Knowledge**: Do not use outside facts or assumptions about
-   company policies. Only use what's explicitly stated in the documents.
+   the product. Only use what's explicitly stated in the documents.
 
 4. **Completeness**: If information spans multiple documents, synthesize it
    and cite all relevant sources.
 
-## HR Policy Documents
+## Zen HR Support Documentation
 
 <documents>
 {documents}
@@ -89,7 +89,7 @@ SYSTEM_PROMPT_TEMPLATE = """You are an HR Policy Assistant for Acme Corporation.
 
 ## Instructions
 
-Answer employee questions about HR policies based solely on the documents above.
+Answer customer questions about Zen HR based solely on the documentation above.
 Be helpful, professional, and cite your sources.
 """
 
@@ -148,7 +148,7 @@ def main():
         return
 
     # Interactive mode
-    print("\nHR Policy Assistant (Long-Context RAG)")
+    print("\nZen HR Support Assistant (Long-Context RAG)")
     print("Type 'quit' to exit\n")
 
     while True:

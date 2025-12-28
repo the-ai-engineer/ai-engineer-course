@@ -1,44 +1,46 @@
-# TechStyle Store - Customer FAQ
+# Zen HR - Product FAQ
 
-## Shipping
+## Getting Started
 
-**How long does shipping take?**
-Standard shipping takes 5-7 business days. Express shipping takes 2-3 business days.
+**How do I create a Zen HR account?**
+Visit app.zenhr.com and click "Start Free Trial". You can use Google SSO or create an account with your work email. No credit card required for the 14-day trial.
 
-**Do you ship internationally?**
-Yes, we ship to over 50 countries. International shipping takes 10-14 business days and costs $15-25 depending on location.
+**What's included in the free trial?**
+The trial includes full access to the Professional plan features: unlimited employees, all HR modules, API access, and priority support.
 
-**How much does shipping cost?**
-Standard shipping is free on orders over $50. Express shipping costs $12.99.
+**How do I add my first employee?**
+Go to People > Add Employee, enter their details, and send an invite. They'll receive an email to set up their profile.
 
-## Returns & Refunds
+## Billing
 
-**What is your return policy?**
-You can return any unused item within 30 days of purchase for a full refund. Items must be in original packaging.
+**What plans do you offer?**
+- Starter: $6/employee/month (up to 25 employees)
+- Professional: $12/employee/month (unlimited employees)
+- Enterprise: Custom pricing (dedicated support, SLA)
 
-**How do I start a return?**
-Email returns@techstyle.com with your order number. We'll send you a prepaid shipping label within 24 hours.
+**How do I upgrade my plan?**
+Go to Settings > Billing > Change Plan. Upgrades take effect immediately. You'll be prorated for the remainder of the billing cycle.
 
-**When will I receive my refund?**
-Refunds are processed within 5 business days of receiving your return. It may take an additional 3-5 days to appear on your statement.
+**Do you offer annual billing?**
+Yes, annual billing saves 20%. Pay for 10 months, get 12 months of service.
 
-## Orders & Payment
+## Integrations
 
-**What payment methods do you accept?**
-We accept Visa, Mastercard, American Express, PayPal, and Apple Pay.
+**What payroll systems do you integrate with?**
+We integrate with Gusto, ADP, Paychex, and Rippling. Go to Settings > Integrations to connect.
 
-**Can I modify my order after placing it?**
-Orders can be modified within 1 hour of placement. After that, please wait for delivery and initiate a return if needed.
+**Do you have an API?**
+Yes, we offer a REST API on Professional and Enterprise plans. Documentation at docs.zenhr.com/api.
 
-**How do I track my order?**
-Once your order ships, you'll receive an email with a tracking number. You can also check order status at techstyle.com/orders.
+**Can I export my data?**
+Yes, go to Settings > Data > Export. You can export employees, time-off, and reports in CSV or JSON format.
 
-## Contact
+## Support
 
-**How do I contact customer support?**
-- Email: support@techstyle.com (response within 24 hours)
-- Phone: 1-800-555-0123 (Mon-Fri 9am-6pm EST)
-- Live chat: Available on our website 24/7
+**How do I contact support?**
+- Email: support@zenhr.com (response within 4 hours)
+- Live chat: Available in-app Mon-Fri 9am-6pm ET
+- Phone: 1-800-ZENHR-01 (Enterprise only)
 
-**What are your business hours?**
-Our customer service team is available Monday through Friday, 9am to 6pm Eastern Time.
+**Where can I find documentation?**
+Visit docs.zenhr.com for guides, tutorials, and API documentation.

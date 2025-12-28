@@ -24,9 +24,10 @@ def answer_question(question: str, context: str) -> str:
     """Answer a question using the provided context."""
     response = client.responses.create(
         model="gpt-5-mini",
-        instructions="""You are a friendly customer service assistant.
-Be concise and direct. Answer based on the FAQ document provided.""",
-        input=f"""FAQ Document:
+        instructions="""You are a helpful customer support agent for Zen HR.
+Be concise and direct. Answer based on the FAQ document provided.
+If you can't find the answer, say so and suggest contacting support@zenhr.com.""",
+        input=f"""Zen HR Product FAQ:
 {context}
 
 Customer Question: {question}""",
@@ -44,9 +45,9 @@ def run_demo():
 
     # Sample questions
     questions = [
-        "What is your return policy?",
-        "How much does express shipping cost?",
-        "Do you accept Bitcoin?",
+        "What plans do you offer?",
+        "How do I integrate with Gusto?",
+        "Do you offer a free trial?",
         "How do I contact support?",
     ]
 
