@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Policy Assistant</title>
+    <title>Customer Support Portal</title>
     <style>
         * {
             box-sizing: border-box;
@@ -217,19 +217,19 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
-        <h1>HR Policy Assistant</h1>
+        <h1>Customer Support Portal</h1>
     </header>
 
     <div class="chat-container" id="chat">
         <div class="welcome">
-            <h2>Welcome to the HR Policy Assistant</h2>
-            <p>Ask me anything about company policies, benefits, vacation, expenses, and more.</p>
+            <h2>Welcome to Zen HR Support</h2>
+            <p>Ask me anything about our product, billing, integrations, and troubleshooting.</p>
         </div>
     </div>
 
     <div class="input-container">
         <form class="input-wrapper" id="form">
-            <input type="text" id="input" placeholder="Ask about HR policies..." autocomplete="off">
+            <input type="text" id="input" placeholder="Ask about Zen HR..." autocomplete="off">
             <button type="submit" id="submit">Send</button>
         </form>
     </div>
@@ -307,17 +307,17 @@
             addLoading();
 
             try {
-                const response = await fetch('/ask', {
+                const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question })
+                    body: JSON.stringify({ message: question })
                 });
 
                 const data = await response.json();
                 removeLoading();
 
                 if (response.ok) {
-                    addMessage('assistant', data.answer, data.sources);
+                    addMessage('assistant', data.response, data.sources);
                 } else {
                     addMessage('assistant', 'Sorry, something went wrong. Please try again.');
                 }
