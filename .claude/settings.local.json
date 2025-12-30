@@ -19,7 +19,9 @@
       "Bash(xargs:*)",
       "WebFetch(domain:langfuse.com)",
       "WebFetch(domain:gitlab.com)",
-      "WebFetch(domain:handbook.gitlab.com)"
+      "WebFetch(domain:handbook.gitlab.com)",
+      "Bash(grep:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

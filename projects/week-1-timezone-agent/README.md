@@ -15,7 +15,7 @@ Copy the sample env file and add your API key:
 cp .env-sample .env
 ```
 
-Get your API key at: https://aistudio.google.com/apikey
+Get your API key at: https://platform.openai.com/api-keys
 
 ## Run
 
