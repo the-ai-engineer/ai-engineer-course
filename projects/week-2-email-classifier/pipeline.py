@@ -1,8 +1,15 @@
 """
 Email Triage
 
-Classify emails and take different actions based on category.
-Demonstrates: conditional workflows, structured output.
+Auto-sort, label, and draft responses so your inbox stays at zero.
+
+This pipeline processes incoming emails through an AI-powered triage system:
+1. Classify each email into a category
+2. Apply Gmail labels for organization
+3. Draft responses for emails that need them
+4. Mark as read to avoid reprocessing
+
+Demonstrates: conditional workflows, structured output, Gmail API integration.
 
 Usage:
     uv run python pipeline.py                       # Run with sample emails
@@ -12,6 +19,7 @@ Usage:
 """
 
 import argparse
+from enum import Enum
 from openai import OpenAI
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -22,19 +30,56 @@ client = OpenAI()
 
 
 # =============================================================================
+# Categories
+# =============================================================================
+
+
+class EmailCategory(str, Enum):
+    """
+    Email categories for triage routing.
+
+    - ACTION_REQUIRED: Emails needing a response (questions, requests, opportunities)
+    - INFORMATIONAL: Updates, reports, FYIs that don't need a reply
+    - MARKETING: Newsletters, promotions, product updates
+    - AUTOMATED: Receipts, confirmations, system notifications
+    - SPAM: Unsolicited outreach, low-quality pitches
+    """
+
+    ACTION_REQUIRED = "action_required"
+    INFORMATIONAL = "informational"
+    MARKETING = "marketing"
+    AUTOMATED = "automated"
+    SPAM = "spam"
+
+
+class Priority(str, Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+# =============================================================================
 # Models
 # =============================================================================
 
 
 class TriageResult(BaseModel):
-    category: str  # respond, skip
+    """Result of email classification."""
+
+    category: EmailCategory
+    priority: Priority
+    needs_response: bool
     reason: str
 
 
 class ProcessedEmail(BaseModel):
+    """Fully processed email with triage result and optional draft."""
+
     subject: str
     sender: str
-    category: str
+    category: EmailCategory
+    priority: Priority
+    needs_response: bool
     reason: str
     draft: str | None = None
 

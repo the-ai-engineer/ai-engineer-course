@@ -39,7 +39,6 @@ Name: [name]
 Email: [email]
 Phone: [phone]
 Company: [company]""",
-    temperature=0.0,
 )
 
 response.output_text
@@ -70,7 +69,6 @@ review = "This product is amazing! Best purchase I've ever made."
 response = client.responses.create(
     model="gpt-5-mini",
     input=few_shot_prompt.format(review=review),
-    temperature=0.0,
 )
 
 response.output_text
@@ -97,7 +95,6 @@ response = client.responses.create(
 - One sentence only
 - Include the key number
 </instructions>""",
-    temperature=0.0,
 )
 
 response.output_text
