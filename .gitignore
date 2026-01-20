@@ -26,6 +26,13 @@ uv.lock
 *.swo
 .DS_Store
 
+# Node.js / JavaScript
+node_modules/
+.next/
+.turbo/
+*.tsbuildinfo
+bun.lock
+
 # Project specific
 *.db
 *.sqlite
