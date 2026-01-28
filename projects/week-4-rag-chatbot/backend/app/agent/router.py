@@ -58,7 +58,7 @@ def classify_query(query: str) -> QueryClassification:
     logger.info(f"[ROUTER] Classifying query: {query!r}")
 
     response = client.responses.parse(
-        model="gpt-4o-mini",
+        model=settings.router_model,
         instructions=CLASSIFICATION_PROMPT,
         input=f"Query: {query}",
         text_format=QueryClassification,

@@ -22,7 +22,8 @@ class Settings(BaseSettings):
 
     # Models
     embedding_model: str = "text-embedding-3-small"
-    generation_model: str = "gpt-4o-mini"
+    generation_model: str = "gpt-5.2"
+    router_model: str = "gpt-5-mini"
 
     # Embedding dimensions
     embedding_dimensions: int = 1536
