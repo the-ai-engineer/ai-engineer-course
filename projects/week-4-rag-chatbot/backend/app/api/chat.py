@@ -1,4 +1,4 @@
-"""Chat endpoint with SSE streaming."""
+"""Chat endpoint with SSE streaming and intent-based routing."""
 
 import json
 import logging
@@ -8,11 +8,18 @@ from fastapi import APIRouter
 from sse_starlette.sse import EventSourceResponse
 
 from app.agent.agent import AgentDeps, rag_agent
+from app.agent.router import QueryIntent, classify_query
 from app.schemas.chat import ChatRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+OFF_TOPIC_RESPONSE = (
+    "I'm a customer support assistant and can only help with questions about "
+    "orders, shipping, returns, payments, and our products. "
+    "Is there something I can help you with in those areas?"
+)
 
 
 async def stream_response(message: str) -> AsyncIterator[dict]:
@@ -25,6 +32,17 @@ async def stream_response(message: str) -> AsyncIterator[dict]:
         SSE events with tokens and final sources.
     """
     logger.info(f"[CHAT] Starting stream for message: {message!r}")
+
+    # Classify query intent before searching
+    classification = classify_query(message)
+
+    if classification.intent == QueryIntent.OFF_TOPIC:
+        logger.info(f"[CHAT] Query classified as off-topic: {classification.reason}")
+        yield {"event": "token", "data": json.dumps({"content": OFF_TOPIC_RESPONSE})}
+        yield {"event": "done", "data": json.dumps({"sources": []})}
+        return
+
+    # Proceed with RAG for customer support queries
     response_chunks: list[str] = []
     deps = AgentDeps()
 
