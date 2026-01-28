@@ -13,6 +13,7 @@ Code examples for building retrieval-augmented generation systems.
 | `04_vector_search.py` | Vector Search | Semantic search with embeddings |
 | `05_hybrid_search.py` | Hybrid Search | Vector + keyword search with RRF |
 | `06_agentic_rag.py` | Agentic RAG | Document-oriented retrieval with tool use |
+| `07_query_routing.py` | Query Routing | Intent classification before RAG search |
 | `runbooks/` | Sample Data | Sample runbooks for agentic RAG demo |
 
 ## Prerequisites
@@ -54,6 +55,9 @@ uv run python 05_hybrid_search.py
 
 # 6. Agentic RAG (no Docker required)
 uv run python 06_agentic_rag.py
+
+# 7. Query Routing (no Docker required)
+uv run python 07_query_routing.py
 ```
 
 ## Project
