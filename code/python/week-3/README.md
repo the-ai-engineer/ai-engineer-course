@@ -14,6 +14,7 @@ Code examples for building retrieval-augmented generation systems.
 | `05_hybrid_search.py` | Hybrid Search | Vector + keyword search with RRF |
 | `06_agentic_rag.py` | Agentic RAG | Document-oriented retrieval with tool use |
 | `07_query_routing.py` | Query Routing | Intent classification before RAG search |
+| `08_reranking.py` | Reranking | Improve retrieval with LLM or Cohere reranking |
 | `runbooks/` | Sample Data | Sample runbooks for agentic RAG demo |
 
 ## Prerequisites
@@ -58,6 +59,9 @@ uv run python 06_agentic_rag.py
 
 # 7. Query Routing (no Docker required)
 uv run python 07_query_routing.py
+
+# 8. Reranking (no Docker required)
+uv run python 08_reranking.py
 ```
 
 ## Project
