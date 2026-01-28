@@ -1,0 +1,45 @@
+# =============================================================================
+# Render Blueprint - RAG Chatbot Deployment
+# =============================================================================
+# Deploy with: Connect this repo in Render dashboard -> New Blueprint
+
+services:
+  # Backend API
+  - type: web
+    name: rag-chatbot-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rag-chatbot-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in dashboard
+      - key: GENERATION_MODEL
+        value: gpt-5.2
+      - key: ROUTER_MODEL
+        value: gpt-5-mini
+      - key: EMBEDDING_MODEL
+        value: text-embedding-3-small
+      - key: CORS_ORIGINS
+        value: https://rag-chatbot-frontend.onrender.com
+    healthCheckPath: /api/health
+
+  # Frontend
+  - type: web
+    name: rag-chatbot-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://rag-chatbot-backend.onrender.com
+
+databases:
+  # PostgreSQL with pgvector
+  - name: rag-chatbot-db
+    plan: starter  # Free tier
+    postgresMajorVersion: 16
+    ipAllowList: []  # Allow all (Render internal)

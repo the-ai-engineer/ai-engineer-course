@@ -174,6 +174,54 @@ data: {"sources": [{"source": "billing.md", "content": "...", "score": 0.85}]}
 2. Run `uv run python scripts/ingest.py ../docs` from the backend directory
 3. The chatbot will now answer questions about your documents
 
+## Deploy to Render
+
+This project includes a `render.yaml` blueprint for one-click deployment.
+
+### Steps
+
+1. Push this repo to GitHub
+2. Create a Render account at [render.com](https://render.com)
+3. Click "New" > "Blueprint" and connect your repo
+4. Render auto-detects `render.yaml` and provisions:
+   - PostgreSQL database with pgvector
+   - Backend API service
+   - Frontend web service
+5. Set `OPENAI_API_KEY` in the backend service environment variables
+6. After deployment, initialize the database:
+
+```bash
+# Option 1: Use Render Shell (in dashboard)
+cd /app && python scripts/init_db.py
+
+# Option 2: Use Render CLI
+render ssh rag-chatbot-backend
+python scripts/init_db.py
+```
+
+7. Ingest your documents:
+
+```bash
+python scripts/ingest.py docs/
+```
+
+8. Visit your frontend URL (e.g., `https://rag-chatbot-frontend.onrender.com`)
+
+### Environment Variables
+
+The blueprint configures most variables automatically. You only need to set:
+
+| Variable | Where to Set | Description |
+|----------|--------------|-------------|
+| `OPENAI_API_KEY` | Backend service | Your OpenAI API key |
+
+### Notes
+
+- Free tier Postgres includes pgvector support
+- Services get HTTPS automatically
+- Auto-deploy triggers on push to main branch
+- First deploy may take a few minutes while Docker images build
+
 ## Out of Scope
 
 This example intentionally excludes:
