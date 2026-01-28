@@ -171,7 +171,7 @@ export default function Home() {
             placeholder="Ask a question..."
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+            className="flex-1 resize-none rounded-lg border border-input bg-background px-4 py-3 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
           />
           <Button
             onClick={() => handleSend()}

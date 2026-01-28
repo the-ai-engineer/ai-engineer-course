@@ -58,11 +58,11 @@ export default function ChatMessage({ message, isLoading }: ChatMessageProps) {
         )}
       >
         {isUser ? (
-          <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+          <p className="whitespace-pre-wrap">{message.content}</p>
         ) : showLoading ? (
           <LoadingDots />
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert text-sm [&>p]:my-1">
+          <div className="prose max-w-none dark:prose-invert [&>p]:my-1">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message.content || "Thinking..."}
             </ReactMarkdown>
