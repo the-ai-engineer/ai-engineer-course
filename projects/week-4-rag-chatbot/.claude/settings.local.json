@@ -3,7 +3,8 @@
     "allow": [
       "Bash(bunx shadcn@latest add:*)",
       "Bash(wc:*)",
-      "Bash(git -C /Users/owainlewis/Code/github/ai-engineer/ai-engineer-course/projects/week-4-rag-chatbot status --short)"
+      "Bash(git -C /Users/owainlewis/Code/github/ai-engineer/ai-engineer-course/projects/week-4-rag-chatbot status --short)",
+      "Bash(docker logs:*)"
     ]
   }
 }

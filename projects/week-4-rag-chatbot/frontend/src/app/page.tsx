@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "@/components/ChatMessage";
-import { Message, Source, streamChat } from "@/lib/api";
+import { ChatError, Message, Source, streamChat } from "@/lib/api";
 
 const EXAMPLE_QUESTIONS = [
   "How do I return an item?",
@@ -81,11 +81,16 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to send message:", error);
       setIsLoading(false);
+      const errorMessage =
+        error instanceof ChatError
+          ? error.message
+          : "Sorry, an error occurred. Please try again.";
       setMessages((prev) => {
         const updated = [...prev];
         const lastMsg = updated[updated.length - 1];
-        if (lastMsg.role === "assistant" && !lastMsg.content) {
-          lastMsg.content = "Sorry, an error occurred. Please try again.";
+        if (lastMsg.role === "assistant") {
+          lastMsg.content = `Error: ${errorMessage}`;
+          lastMsg.error = errorMessage;
         }
         return updated;
       });
@@ -172,6 +177,7 @@ export default function Home() {
             onClick={() => handleSend()}
             disabled={isLoading || !input.trim()}
             className="px-4 py-3 h-auto"
+            aria-label="Send message"
           >
             <Send className="h-4 w-4" />
           </Button>

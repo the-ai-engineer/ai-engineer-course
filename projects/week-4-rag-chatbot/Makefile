@@ -2,14 +2,14 @@
 
 # Database
 db-up:
-	docker compose -f docker/docker-compose.yml up -d
+	docker compose up -d
 
 db-down:
-	docker compose -f docker/docker-compose.yml down
+	docker compose down
 
 db-reset:
-	docker compose -f docker/docker-compose.yml down -v
-	docker compose -f docker/docker-compose.yml up -d
+	docker compose down -v
+	docker compose up -d
 
 # Backend
 backend:

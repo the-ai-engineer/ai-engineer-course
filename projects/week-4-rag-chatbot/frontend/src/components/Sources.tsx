@@ -41,9 +41,9 @@ export default function Sources({ sources }: SourcesProps) {
 
       {isOpen && (
         <div className="mt-2 space-y-2">
-          {sources.map((source, idx) => (
+          {sources.map((source) => (
             <div
-              key={idx}
+              key={`${source.source}-${source.score}`}
               className="p-2.5 bg-background/50 rounded-md border border-border/50 text-xs"
             >
               <div className="flex justify-between items-center mb-1">

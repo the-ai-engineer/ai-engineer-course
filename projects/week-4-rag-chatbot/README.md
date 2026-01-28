@@ -87,7 +87,7 @@ cd frontend
 bun dev
 ```
 
-Visit http://localhost:3000 to use the chatbot.
+Visit http://localhost:4567 to use the chatbot.
 
 ## Project Structure
 

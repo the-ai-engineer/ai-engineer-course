@@ -17,8 +17,12 @@ from app.services.embeddings import get_embeddings
 settings = get_settings()
 
 
-def ingest_document(file_path: Path, conn: psycopg.Connection) -> int:
-    """Ingest a single document using Docling's hierarchical chunking."""
+def ingest_document(file_path: Path, conn: psycopg.Connection) -> tuple[int, int]:
+    """Ingest a single document using Docling's hierarchical chunking.
+
+    Returns:
+        Tuple of (chunks_added, chunks_deleted).
+    """
     converter = DocumentConverter()
     result = converter.convert(str(file_path))
 
@@ -26,7 +30,7 @@ def ingest_document(file_path: Path, conn: psycopg.Connection) -> int:
     doc_chunks = list(chunker.chunk(result.document))
 
     if not doc_chunks:
-        return 0
+        return 0, 0
 
     # Build chunk texts with heading context
     chunk_texts = []
@@ -43,6 +47,10 @@ def ingest_document(file_path: Path, conn: psycopg.Connection) -> int:
     source = file_path.name
 
     with conn.cursor() as cur:
+        # Delete existing chunks for this source to prevent duplicates on re-ingest
+        cur.execute("DELETE FROM chunks WHERE source = %s", (source,))
+        deleted_count = cur.rowcount
+
         for text, embedding in zip(chunk_texts, embeddings):
             cur.execute(
                 "INSERT INTO chunks (source, content, embedding) VALUES (%s, %s, %s)",
@@ -50,7 +58,7 @@ def ingest_document(file_path: Path, conn: psycopg.Connection) -> int:
             )
 
     conn.commit()
-    return len(chunk_texts)
+    return len(chunk_texts), deleted_count
 
 
 def ingest_directory(docs_dir: Path) -> None:
@@ -65,9 +73,12 @@ def ingest_directory(docs_dir: Path) -> None:
         for file_path in docs_dir.iterdir():
             if file_path.suffix.lower() in supported_extensions:
                 print(f"Processing: {file_path.name}")
-                count = ingest_document(file_path, conn)
-                total_chunks += count
-                print(f"  Added {count} chunks")
+                added, deleted = ingest_document(file_path, conn)
+                total_chunks += added
+                if deleted > 0:
+                    print(f"  Replaced {deleted} existing chunks with {added} new chunks")
+                else:
+                    print(f"  Added {added} chunks")
 
         print(f"\nTotal: {total_chunks} chunks ingested")
     finally:

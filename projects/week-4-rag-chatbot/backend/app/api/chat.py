@@ -25,15 +25,16 @@ async def stream_response(message: str) -> AsyncIterator[dict]:
         SSE events with tokens and final sources.
     """
     logger.info(f"[CHAT] Starting stream for message: {message!r}")
-    full_response = ""
+    response_chunks: list[str] = []
     deps = AgentDeps()
 
     try:
         async with rag_agent.run_stream(message, deps=deps) as response:
             async for chunk in response.stream_text(delta=True):
-                full_response += chunk
+                response_chunks.append(chunk)
                 yield {"event": "token", "data": json.dumps({"content": chunk})}
 
+        full_response = "".join(response_chunks)
         logger.info(f"[CHAT] Stream complete. Response length: {len(full_response)}, Sources: {len(deps.sources)}")
         yield {
             "event": "done",

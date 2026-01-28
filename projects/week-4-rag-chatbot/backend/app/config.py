@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     # Embedding dimensions
     embedding_dimensions: int = 1536
 
+    # CORS origins (comma-separated list)
+    cors_origins: str = "http://localhost:4567"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """Parse CORS origins as a list."""
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
 
 @lru_cache
 def get_settings() -> Settings:
