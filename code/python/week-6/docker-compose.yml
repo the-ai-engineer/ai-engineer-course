@@ -1,0 +1,61 @@
+# Docker Compose for local development
+#
+# Usage:
+#   docker compose up        # Start all services
+#   docker compose up --build  # Rebuild and start
+#   docker compose down      # Stop all services
+#   docker compose down -v   # Stop and remove volumes (deletes data)
+
+services:
+  # =============================================================================
+  # Application
+  # =============================================================================
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # Database connection - uses service name 'db' as hostname
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/app
+      # LLM API key - loaded from your local .env file
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Langfuse tracing (optional)
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Restart on failure
+    restart: unless-stopped
+
+  # =============================================================================
+  # PostgreSQL with pgvector
+  # =============================================================================
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=app
+    ports:
+      # Expose to host for local database tools
+      - "5432:5432"
+    volumes:
+      # Persist data between container restarts
+      - postgres_data:/var/lib/postgresql/data
+      # Run initialization scripts on first start
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres_data:
+    # Named volume persists data even after 'docker compose down'
+    # Use 'docker compose down -v' to delete

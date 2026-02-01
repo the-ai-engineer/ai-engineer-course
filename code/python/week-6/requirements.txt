@@ -1,0 +1,20 @@
+# Core dependencies for AI application deployment
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.0.0
+
+# OpenAI SDK
+openai>=1.0.0
+
+# Database
+psycopg2-binary>=2.9.0
+pgvector>=0.2.0
+
+# Environment and config
+python-dotenv>=1.0.0
+
+# Observability
+langfuse>=2.0.0
+
+# Optional: PydanticAI (from Module 4)
+pydantic-ai>=0.0.20
