@@ -8,8 +8,7 @@ services:
   - type: web
     name: rag-chatbot-backend
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    rootDir: projects/week-4-rag-chatbot/backend
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -31,8 +30,7 @@ services:
   - type: web
     name: rag-chatbot-frontend
     runtime: docker
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
+    rootDir: projects/week-4-rag-chatbot/frontend
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://rag-chatbot-backend.onrender.com
