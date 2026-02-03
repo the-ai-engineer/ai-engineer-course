@@ -1,0 +1,25 @@
+[project]
+name = "week-6-deployment"
+version = "0.1.0"
+description = "Module 6: Deployment"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.0.0",
+    "openai>=1.0.0",
+    "psycopg2-binary>=2.9.0",
+    "pgvector>=0.2.0",
+    "python-dotenv>=1.0.0",
+    "pydantic-ai>=0.0.20",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ipykernel",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

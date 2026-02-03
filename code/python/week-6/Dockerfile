@@ -1,34 +1,18 @@
 # =============================================================================
-# Stage 1: Build dependencies
-# =============================================================================
-FROM python:3.11-slim AS builder
-
-WORKDIR /app
-
-# Install build dependencies (if any packages need compilation)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# =============================================================================
-# Stage 2: Production image
+# Sample Dockerfile for AI App Deployment
 # =============================================================================
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy installed packages from builder
-COPY --from=builder /root/.local /root/.local
-ENV PATH=/root/.local/bin:$PATH
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Install curl for health checks
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Copy dependency files
+COPY pyproject.toml uv.lock* ./
+
+# Install dependencies
+RUN uv sync --frozen --no-dev
 
 # Copy application code
 COPY . .
@@ -39,11 +23,10 @@ USER appuser
 
 # Health check - platforms use this to know if your app is ready
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8000
 
 # Run the application
-# Using 0.0.0.0 to accept connections from outside the container
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

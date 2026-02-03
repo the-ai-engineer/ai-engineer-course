@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # OpenAI
     openai_api_key: str = ""
     embedding_model: str = "text-embedding-3-small"
-    generation_model: str = "gpt-4o-mini"
+    generation_model: str = "gpt-5-mini"
 
     # Search
     default_search_limit: int = 5

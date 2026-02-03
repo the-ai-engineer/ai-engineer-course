@@ -72,7 +72,7 @@ def read_runbook(name: str) -> str:
 def ask(question: str) -> str:
     """Ask the on-call assistant a question."""
     response = client.responses.create(
-        model="gpt-4.1-mini",
+        model="gpt-5-mini",
         instructions=SYSTEM_PROMPT,
         input=question,
         tools=tools,
@@ -88,7 +88,7 @@ def ask(question: str) -> str:
 
         # Continue conversation with tool result
         response = client.responses.create(
-            model="gpt-4.1-mini",
+            model="gpt-5-mini",
             previous_response_id=response.id,
             input=[
                 {

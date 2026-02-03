@@ -64,7 +64,7 @@ When answering:
 # =============================================================================
 
 hr_agent = Agent(
-    "openai:gpt-4o-mini",
+    "openai:gpt-5-mini",
     system_prompt=SYSTEM_PROMPT,
     deps_type=AgentDeps,
 )
